@@ -1,33 +1,23 @@
 <script setup lang="ts">
 import Motion from "./utils/motion";
-import { useRouter } from "vue-router";
-import { message } from "@/utils/message";
-import { loginRules } from "./utils/rule";
-import { ref, reactive, toRaw } from "vue";
-import { debounce } from "@pureadmin/utils";
+import { ref, toRaw } from "vue";
 import { useNav } from "@/layout/hooks/useNav";
-import { useEventListener } from "@vueuse/core";
-import type { FormInstance } from "element-plus";
 import { useLayout } from "@/layout/hooks/useLayout";
-import { useUserStoreHook } from "@/store/modules/user";
-import { initRouter, getTopMenu } from "@/router/utils";
 import { bg, avatar, illustration } from "./utils/static";
-import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 
 import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
-import Lock from "~icons/ri/lock-fill";
-import User from "~icons/ri/user-3-fill";
+
+import jinfengForm from "./components/jinfeng-form.vue";
+import universalForm from "./components/universal-form.vue";
+import adminForm from "./components/admin-form.vue";
+import enrollFrom from "./components/enroll-from.vue";
+import updatePwd from "./components/update-pwd.vue";
 
 defineOptions({
   name: "Login"
 });
-
-const router = useRouter();
-const loading = ref(false);
-const disabled = ref(false);
-const ruleFormRef = ref<FormInstance>();
 
 const { initStorage } = useLayout();
 initStorage();
@@ -36,56 +26,24 @@ const { dataTheme, overallStyle, dataThemeChange } = useDataThemeChange();
 dataThemeChange(overallStyle.value);
 const { title } = useNav();
 
-const ruleForm = reactive({
-  username: "admin",
-  password: "admin123"
-});
+const activeName = ref("jf"); // 登录入口选择
+const isEnroll = ref(false); // 是否注册
+const isUpdatePwd = ref(false); // 是否修改密码
 
-const onLogin = async (formEl: FormInstance | undefined) => {
-  if (!formEl) return;
-  await formEl.validate(valid => {
-    if (valid) {
-      loading.value = true;
-      useUserStoreHook()
-        .loginByUsername({
-          username: ruleForm.username,
-          password: ruleForm.password
-        })
-        .then(res => {
-          if (res.success) {
-            // 获取后端路由
-            return initRouter().then(() => {
-              disabled.value = true;
-              router
-                .push(getTopMenu(true).path)
-                .then(() => {
-                  message("登录成功", { type: "success" });
-                })
-                .finally(() => (disabled.value = false));
-            });
-          } else {
-            message("登录失败", { type: "error" });
-          }
-        })
-        .finally(() => (loading.value = false));
-    }
-  });
+const handleEnroll = () => {
+  // 注册
+  isEnroll.value = !isEnroll.value;
 };
 
-const immediateDebounce: any = debounce(
-  formRef => onLogin(formRef),
-  1000,
-  true
-);
+const handleUpdatePassword = () => {
+  // 修改密码
+  isUpdatePwd.value = !isUpdatePwd.value;
+};
 
-useEventListener(document, "keydown", ({ code }) => {
-  if (
-    ["Enter", "NumpadEnter"].includes(code) &&
-    !disabled.value &&
-    !loading.value
-  )
-    immediateDebounce(ruleFormRef.value);
-});
+const hendleRebackLogin = () => {
+  if (isEnroll.value) isEnroll.value = false;
+  if (isUpdatePwd.value) isUpdatePwd.value = false;
+};
 </script>
 
 <template>
@@ -112,57 +70,40 @@ useEventListener(document, "keydown", ({ code }) => {
             <h2 class="outline-hidden">{{ title }}</h2>
           </Motion>
 
-          <el-form
-            ref="ruleFormRef"
-            :model="ruleForm"
-            :rules="loginRules"
-            size="large"
+          <el-tabs
+            v-if="!isEnroll && !isUpdatePwd"
+            v-model="activeName"
+            type="border-card"
+            class="demo-tabs"
+            :stretch="true"
           >
-            <Motion :delay="100">
-              <el-form-item
-                :rules="[
-                  {
-                    required: true,
-                    message: '请输入账号',
-                    trigger: 'blur'
-                  }
-                ]"
-                prop="username"
-              >
-                <el-input
-                  v-model="ruleForm.username"
-                  clearable
-                  placeholder="账号"
-                  :prefix-icon="useRenderIcon(User)"
-                />
-              </el-form-item>
-            </Motion>
-
-            <Motion :delay="150">
-              <el-form-item prop="password">
-                <el-input
-                  v-model="ruleForm.password"
-                  clearable
-                  show-password
-                  placeholder="密码"
-                  :prefix-icon="useRenderIcon(Lock)"
-                />
-              </el-form-item>
-            </Motion>
-
-            <Motion :delay="250">
-              <el-button
-                class="w-full mt-4!"
-                size="default"
-                type="primary"
-                :loading="loading"
-                :disabled="disabled"
-                @click="onLogin(ruleFormRef)"
-              >
-                登录
-              </el-button>
-            </Motion>
-          </el-form>
+            <el-tab-pane label="金风专用" name="jf">
+              <jinfengForm />
+            </el-tab-pane>
+            <el-tab-pane label="通用登录" name="ty">
+              <universalForm />
+            </el-tab-pane>
+            <el-tab-pane label="超级管理员" name="admin">
+              <adminForm />
+            </el-tab-pane>
+          </el-tabs>
+          <enrollFrom v-if="isEnroll" />
+          <updatePwd v-if="isUpdatePwd" />
+          <div
+            v-if="activeName !== 'admin' && !isEnroll && !isUpdatePwd"
+            class="flex-between"
+          >
+            <div class="enroll" @click="handleEnroll">新用户注册</div>
+            <div class="update-password" @click="handleUpdatePassword">
+              修改密码
+            </div>
+          </div>
+          <div
+            v-if="activeName !== 'admin' && (isEnroll || isUpdatePwd)"
+            class="flex-between"
+          >
+            <div class="enroll" @click="hendleRebackLogin">登录已有账号</div>
+          </div>
         </div>
       </div>
     </div>
@@ -176,5 +117,27 @@ useEventListener(document, "keydown", ({ code }) => {
 <style lang="scss" scoped>
 :deep(.el-input-group__append, .el-input-group__prepend) {
   padding: 0;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+
+  .enroll,
+  .update-password {
+    display: inline-block;
+    font-family:
+      "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
+      "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+    font-size: 14px;
+    color: #409eff;
+  }
+
+  .enroll:hover,
+  .update-password:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
 }
 </style>
