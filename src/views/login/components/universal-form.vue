@@ -83,7 +83,7 @@ const onLogin = async (formEl: FormInstance | undefined) => {
             return initRouter().then(() => {
               disabled.value = true;
               router
-                .push(getTopMenu(true).path)
+                .push("device-class")
                 .then(() => {
                   message("登录成功", { type: "success" });
                 })
