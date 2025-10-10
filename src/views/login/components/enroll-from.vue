@@ -30,7 +30,7 @@
           />
         </el-form-item>
 
-        <el-form-item prop="password">
+        <el-form-item>
           <el-input
             v-model="ruleForm.password"
             clearable
@@ -39,7 +39,7 @@
             :prefix-icon="useRenderIcon(Lock)"
           />
         </el-form-item>
-        <el-form-item prop="password">
+        <el-form-item>
           <el-input
             v-model="ruleForm.confirmPwd"
             clearable
@@ -54,7 +54,7 @@
             type="primary"
             :loading="loading"
             :disabled="disabled"
-            @click="onLogin(ruleFormRef)"
+            @click="handleEnroll(ruleFormRef)"
           >
             注册
           </el-button>
@@ -72,11 +72,10 @@ import type { FormInstance } from "element-plus";
 import { loginRules } from "../utils/rule";
 import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { useUserStoreHook } from "@/store/modules/user";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
-import { initRouter, getTopMenu } from "@/router/utils";
 import { debounce } from "@pureadmin/utils";
+import { enrollApi } from "@/api/user";
 
 const ruleFormRef = ref<FormInstance>();
 
@@ -91,30 +90,29 @@ const ruleForm = reactive({
   confirmPwd: ""
 });
 
-const onLogin = async (formEl: FormInstance | undefined) => {
+const confirmPwd = () => {
+  if (ruleForm.password !== ruleForm.confirmPwd) {
+    message("两次密码输入不一致，请检查密码", { type: "error" });
+    return false;
+  }
+  return true;
+};
+
+const handleEnroll = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
-  await formEl.validate(valid => {
+  if (!confirmPwd()) return;
+  await formEl.validate(async valid => {
     if (valid) {
       loading.value = true;
-      useUserStoreHook()
-        .loginByUsername({
-          username: ruleForm.username,
-          password: ruleForm.password
-        })
-        .then(res => {
-          if (res.success) {
-            // 获取后端路由
-            return initRouter().then(() => {
-              disabled.value = true;
-              router
-                .push(getTopMenu(true).path)
-                .then(() => {
-                  message("登录成功", { type: "success" });
-                })
-                .finally(() => (disabled.value = false));
+      await enrollApi({
+        userId: ruleForm.username,
+        pwd: ruleForm.password
+      })
+        .then((res: any) => {
+          if (res?.code === 1) {
+            message("用户已创建成功，请通知超级管理员设置权限", {
+              type: "success"
             });
-          } else {
-            message("登录失败", { type: "error" });
           }
         })
         .finally(() => (loading.value = false));
@@ -122,16 +120,12 @@ const onLogin = async (formEl: FormInstance | undefined) => {
   });
 };
 
-const handleEnroll = () => {
-  // 注册
-};
-
 const handleUpdatePassword = () => {
   // 修改密码
 };
 
 const immediateDebounce: any = debounce(
-  formRef => onLogin(formRef),
+  formRef => handleEnroll(formRef),
   1000,
   true
 );

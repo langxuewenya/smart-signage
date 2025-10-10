@@ -26,7 +26,7 @@
         /> -->
         <el-date-picker
           v-model="row.dateRange"
-          :disabled="row.allowNum"
+          :disabled="!!row.allowNum"
           type="daterange"
           format="YYYY-M-D"
           value-format="YYYY-M-D"

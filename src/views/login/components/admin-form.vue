@@ -1,5 +1,5 @@
 <template>
-  <el-form ref="ruleFormRef" :model="ruleForm" :rules="loginRules" size="large">
+  <el-form ref="ruleFormRef" :model="ruleForm" size="large">
     <el-form-item
       :rules="[
         {
@@ -18,7 +18,16 @@
       />
     </el-form-item>
 
-    <el-form-item prop="password">
+    <el-form-item
+      :rules="[
+        {
+          required: true,
+          message: '请输入密码',
+          trigger: 'blur'
+        }
+      ]"
+      prop="password"
+    >
       <el-input
         v-model="ruleForm.password"
         clearable
@@ -46,14 +55,13 @@ import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useEventListener } from "@vueuse/core";
 import type { FormInstance } from "element-plus";
-import { loginRules } from "../utils/rule";
 import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useUserStoreHook } from "@/store/modules/user";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
-import { initRouter, getTopMenu } from "@/router/utils";
 import { debounce } from "@pureadmin/utils";
+import { usePermissionStoreHook } from "@/store/modules/permission";
 
 const ruleFormRef = ref<FormInstance>();
 
@@ -63,7 +71,7 @@ const disabled = ref(false);
 
 const ruleForm = reactive({
   username: "admin",
-  password: "admin123"
+  password: "123456"
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {
@@ -73,22 +81,19 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       loading.value = true;
       useUserStoreHook()
         .loginByUsername({
-          username: ruleForm.username,
-          password: ruleForm.password
+          userId: ruleForm.username,
+          pwd: ruleForm.password
         })
-        .then(res => {
-          if (res.success) {
-            // 获取后端路由
-            return initRouter().then(() => {
-              disabled.value = true;
-              router
-                .push("/user-mgr")
-                // .push(getTopMenu(true).path)
-                .then(() => {
-                  message("登录成功", { type: "success" });
-                })
-                .finally(() => (disabled.value = false));
-            });
+        .then(async (res: any) => {
+          if (res.code === 1) {
+            disabled.value = true;
+            await usePermissionStoreHook().handleWholeMenus([]); // 拉取菜单
+            router
+              .push("/user-mgr")
+              .then(() => {
+                message("登录成功", { type: "success" });
+              })
+              .finally(() => (disabled.value = false));
           } else {
             message("登录失败", { type: "error" });
           }

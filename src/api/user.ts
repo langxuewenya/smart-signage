@@ -34,9 +34,14 @@ export type RefreshTokenResult = {
   };
 };
 
-/** 登录 */
+/** 注册 */
+export const enrollApi = (data?: object) => {
+  return http.request("post", "/api/sys/user/register", { data });
+};
+
+/** 管理员登录 */
 export const getLogin = (data?: object) => {
-  return http.request<UserResult>("post", "/login", { data });
+  return http.request("post", "/api/sys/user/login/3", { data });
 };
 
 /** 刷新`token` */
