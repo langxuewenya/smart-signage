@@ -7,7 +7,13 @@ import {
   routerArrays,
   storageLocal
 } from "../utils";
-import { type RefreshTokenResult, getLogin, refreshTokenApi } from "@/api/user";
+import {
+  type RefreshTokenResult,
+  getLogin,
+  jfLogin,
+  universalLogin,
+  refreshTokenApi
+} from "@/api/user";
 import { useMultiTagsStoreHook } from "./multiTags";
 import { type DataInfo, setToken, removeToken, userKey } from "@/utils/auth";
 
@@ -58,7 +64,7 @@ export const useUserStore = defineStore("pure-user", {
     SET_LOGINDAY(value: number) {
       this.loginDay = Number(value);
     },
-    /** 登入 */
+    /** 管理员登入 */
     async loginByUsername(data) {
       return new Promise((resolve, reject) => {
         getLogin(data)
@@ -67,7 +73,43 @@ export const useUserStore = defineStore("pure-user", {
               setToken({
                 ...res.data,
                 username: res.data.userId,
-                roles: []
+                roles: ["admin"]
+              });
+            resolve(res);
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
+    },
+    /** 金风入口登入 */
+    async loginByJF(data) {
+      return new Promise((resolve, reject) => {
+        jfLogin(data)
+          .then((res: any) => {
+            if (res?.code === 1)
+              setToken({
+                ...res.data,
+                username: res.data.userId,
+                roles: ["jinfeng"]
+              });
+            resolve(res);
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
+    },
+    /** 通用入口登入 */
+    async loginByUniversal(data) {
+      return new Promise((resolve, reject) => {
+        universalLogin(data)
+          .then((res: any) => {
+            if (res?.code === 1)
+              setToken({
+                ...res.data,
+                username: res.data.userId,
+                roles: ["universal"]
               });
             resolve(res);
           })

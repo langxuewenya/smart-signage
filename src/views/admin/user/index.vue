@@ -195,9 +195,8 @@ const computedType = wayList => {
 };
 
 // 保存标识牌录入信息配置
-const saveConfig = (userName, list) => {
-  const item = dataList.value.find(i => i.userId == userName);
-  item.sysQrcodeInfoStatusList = list;
+const saveConfig = row => {
+  handleSave(row);
 };
 
 const handleToConfigInfo = row => {

@@ -4,13 +4,14 @@
       <el-button type="success">标识牌列表</el-button>
       <el-button type="primary" @click="handleCreateClass">创建类别</el-button>
     </div>
-    <el-card class="card">
+    <el-card v-if="dataList.length" v-loading="loading" class="card">
       <div v-for="item in dataList" :key="item.name" class="device-item">
         <deviceItem
+          :id="item.id"
           :name="item.name"
           @handleRename="handleRename"
           @handleDelete="handleDelete"
-          @click="handleClick"
+          @dblclick="handleClick(item)"
         />
       </div>
       <!-- <el-badge value="已编辑" class="item" type="primary" :offset="[-50, 10]">
@@ -23,6 +24,8 @@
         <deviceItem name="文件3" />
       </el-badge> -->
     </el-card>
+    <el-empty v-else description="暂无数据" style="height: 75vh" />
+    <DetailDialog ref="detailDialogRef" />
 
     <el-dialog
       v-model="dialogFormVisible"
@@ -37,9 +40,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="dialogFormVisible = false">
-            确认
-          </el-button>
+          <el-button type="primary" @click="handleConfirm"> 确认 </el-button>
         </div>
       </template>
     </el-dialog>
@@ -49,44 +50,34 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from "vue";
 import deviceItem from "../components/device-item.vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import { useRouter } from "vue-router";
+import { message } from "@/utils/message";
+import { getFileList, addFile } from "@/api/common";
+import { storageLocal } from "@pureadmin/utils";
+import { type DataInfo, userKey } from "@/utils/auth";
+import DetailDialog from "./detail-dialog.vue";
 
-const router = useRouter();
-const dialogTableVisible = ref(false);
+const loading = ref(false);
 const dialogFormVisible = ref(false);
 const formLabelWidth = "100px";
 const dialogClass = ref("add");
+const detailDialogRef = ref();
 const form = reactive({
-  name: ""
+  name: "",
+  id: null
 });
-const dataList = ref([
-  {
-    name: "双梁起重机"
-  },
-  {
-    name: "液压升降车"
-  },
-  {
-    name: "AGV平车"
-  },
-  {
-    name: "V12陆上传动链台车"
-  },
-  {
-    name: "V12陆上传动链台车2"
-  },
-  {
-    name: "V12陆上传动链台车3"
-  }
-]);
+const dataList = ref([]);
 
-const getListData = () => {
-  dataList.value = dataList.value.map(item => {
-    return {
-      ...item
-    };
-  });
+const getListData = async () => {
+  loading.value = true;
+  const params = {
+    type: "1", // 设备类别
+    userId: storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? ""
+  };
+  const res: any = await getFileList(params);
+  loading.value = false;
+  dataList.value = res.data || [];
 };
 
 const handleCreateClass = () => {
@@ -95,11 +86,28 @@ const handleCreateClass = () => {
   dialogFormVisible.value = true;
 };
 
-const handleRename = name => {
-  console.log(name, "edit");
+const handleRename = (name, id) => {
   form.name = name;
+  form.id = id;
   dialogClass.value = "edit";
   dialogFormVisible.value = true;
+};
+
+const handleConfirm = async () => {
+  const res: any = await addFile({
+    name: form.name,
+    type: "1",
+    userId: storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? "",
+    parentId: 0,
+    id: form.id
+  });
+  if (res.code == 1) {
+    message(`${dialogClass.value == "add" ? "创建" : "重命名"}"成功"`, {
+      type: "success"
+    });
+    dialogFormVisible.value = false;
+    getListData();
+  }
 };
 
 const handleDelete = name => {
@@ -126,8 +134,8 @@ const handleDelete = name => {
     .catch(() => {});
 };
 
-const handleClick = () => {
-  router.push("/device-detail");
+const handleClick = item => {
+  detailDialogRef.value.show(item);
 };
 
 onMounted(() => {

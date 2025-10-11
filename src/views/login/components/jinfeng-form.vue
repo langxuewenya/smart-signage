@@ -18,7 +18,7 @@
       />
     </el-form-item>
 
-    <el-form-item prop="password">
+    <el-form-item>
       <el-input
         v-model="ruleForm.password"
         clearable
@@ -53,7 +53,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useUserStoreHook } from "@/store/modules/user";
 import Lock from "~icons/ri/lock-fill";
 import User from "~icons/ri/user-3-fill";
-import { initRouter, getTopMenu } from "@/router/utils";
+import { initRouter } from "@/router/utils";
 import { debounce } from "@pureadmin/utils";
 
 const ruleFormRef = ref<FormInstance>();
@@ -64,7 +64,7 @@ const disabled = ref(false);
 
 const ruleForm = reactive({
   username: "admin",
-  password: "admin123"
+  password: "123456"
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {
@@ -73,12 +73,12 @@ const onLogin = async (formEl: FormInstance | undefined) => {
     if (valid) {
       loading.value = true;
       useUserStoreHook()
-        .loginByUsername({
-          username: ruleForm.username,
-          password: ruleForm.password
+        .loginByJF({
+          userId: ruleForm.username,
+          pwd: ruleForm.password
         })
-        .then(res => {
-          if (res.success) {
+        .then((res: any) => {
+          if (res.code == 1) {
             // 获取后端路由
             return initRouter().then(() => {
               disabled.value = true;

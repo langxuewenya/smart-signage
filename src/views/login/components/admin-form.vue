@@ -103,14 +103,6 @@ const onLogin = async (formEl: FormInstance | undefined) => {
   });
 };
 
-const handleEnroll = () => {
-  // 注册
-};
-
-const handleUpdatePassword = () => {
-  // 修改密码
-};
-
 const immediateDebounce: any = debounce(
   formRef => onLogin(formRef),
   1000,

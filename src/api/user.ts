@@ -39,6 +39,16 @@ export const enrollApi = (data?: object) => {
   return http.request("post", "/api/sys/user/register", { data });
 };
 
+/** 金风登录 */
+export const jfLogin = (data?: object) => {
+  return http.request("post", "/api/sys/user/login/1", { data });
+};
+
+/** 通用登录 */
+export const universalLogin = (data?: object) => {
+  return http.request("post", "/api/sys/user/login/2", { data });
+};
+
 /** 管理员登录 */
 export const getLogin = (data?: object) => {
   return http.request("post", "/api/sys/user/login/3", { data });

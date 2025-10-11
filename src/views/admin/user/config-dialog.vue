@@ -10,7 +10,7 @@
     <pure-table
       :data="dataList"
       :columns="columns"
-      style=" height: 83vh;margin-top: 20px"
+      style="height: 83vh; margin-top: 20px"
     >
       <template #entering="{ row }">
         <el-checkbox v-model="row.entering" />
@@ -31,31 +31,15 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { message } from "@/utils/message";
+import { configContentMap } from "@/views/common";
 
 const emit = defineEmits(["saveConfig"]);
 
 const dialogVisible = ref(false);
 const userName = ref("");
 const dataList = ref([]);
+const rowData = ref();
 
-const configContentMap = new Map([
-  ["tagNum", "设备标签号"],
-  ["deviceName", "名称"],
-  ["specsModel", "规格型号"],
-  ["drawingNo", "图纸号/物料号"],
-  ["factoryNo", "出厂编码"],
-  ["serialNo", "SN码/序列码"],
-  ["shapeSize", "外形尺寸"],
-  ["deviceWeight", "设备自重"],
-  ["produceFactory", "生产厂家"],
-  ["factoryTime", "出厂时间"],
-  ["devicePerson", "设备负责人"],
-  ["deviceUnit", "设备责任单位"],
-  ["deviceBelongUnit", "设备归属单位"],
-  ["device_category", "设备类别"],
-  ["devicePosition", "设备位置"],
-  ["deviceStatus", "设备状态"]
-]);
 const columns = ref([
   { type: "index", label: "序号", align: "center", width: 80 },
   {
@@ -89,6 +73,7 @@ const columns = ref([
 
 const show = row => {
   dialogVisible.value = true;
+  rowData.value = row;
   userName.value = row.userId;
   dataList.value = formatDataList(row.sysQrcodeInfoStatusList || []);
 };
@@ -149,7 +134,8 @@ const handleSave = () => {
       list[2][item.filed] = true;
     }
   });
-  emit("saveConfig", userName.value, list);
+  rowData.value.sysQrcodeInfoStatusList = list;
+  emit("saveConfig", rowData.value);
   close();
 };
 

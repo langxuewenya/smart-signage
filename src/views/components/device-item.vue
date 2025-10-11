@@ -17,13 +17,17 @@ const props = defineProps({
   name: {
     type: String,
     default: ""
+  },
+  id: {
+    type: String,
+    default: ""
   }
 });
 
 const emit = defineEmits(["update:modelValue", "handleRename", "handleDelete"]);
 
 const handleRename = () => {
-  emit("handleRename", props.name);
+  emit("handleRename", props.name, props.id);
 };
 const handleDelete = () => {
   emit("handleDelete", props.name);
