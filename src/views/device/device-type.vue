@@ -6,15 +6,17 @@
     </div>
     <div v-if="typeList.length" v-loading="loading" class="card">
       <div v-for="item in typeList" :key="item.name" class="device-item">
-        <deviceItem
+        <FileItem
           :id="item.id"
           :name="item.name"
           @handleRename="handleRename"
-          @handleDelete="handleDelete"
+          @handleDelete="handleDelete(item)"
+          @dblclick="handleDBClick(item)"
         />
       </div>
     </div>
     <el-empty v-else description="暂无数据" style="border: 1px solid #eee" />
+    <DeviceItemDialog ref="deviceItemDialogRef" />
 
     <el-dialog
       v-model="dialogFormVisible"
@@ -38,12 +40,13 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from "vue";
-import deviceItem from "../components/device-item.vue";
+import FileItem from "../components/file-item.vue";
 import { ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
-import { getFileList, addFile } from "@/api/common";
+import { getFileList, addFile, deleteFile } from "@/api/common";
 import { message } from "@/utils/message";
+import DeviceItemDialog from "./device-item-dialog.vue";
 
 const props = defineProps({
   deviceId: {
@@ -52,6 +55,7 @@ const props = defineProps({
   }
 });
 
+const deviceItemDialogRef = ref();
 const loading = ref(false);
 const dialogFormVisible = ref(false);
 const formLabelWidth = "100px";
@@ -107,28 +111,29 @@ const handleConfirm = async () => {
   }
 };
 
-const handleDelete = name => {
-  ElMessageBox.confirm(`删除后不可恢复，确认删除该设备类型？`, `删除${name}`, {
-    confirmButtonText: "确认",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
+const handleDelete = item => {
+  ElMessageBox.confirm(
+    `删除后不可恢复，确认删除该设备类型？`,
+    `删除${item.name}`,
+    {
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
+      type: "warning"
+    }
+  )
     .then(async () => {
-      // const deleteRes = await store.dispatch(
-      //   "systemModule/deletePageRowAction",
-      //   {
-      //     pageName: props.pageName,
-      //     queryInfo: {
-      //       id: scope.row.id
-      //     }
-      //   }
-      // );
-      // if (deleteRes.code == 200) {
-      //   ElMessage.success(`删除${props.listTableConfig.title}成功`);
-      //   getPageData(queryCache.value);
-      // }
+      const params = [item.id];
+      const res: any = await deleteFile(params);
+      if (res.code == 1) {
+        message(`删除成功`, { type: "success" });
+        getListData();
+      }
     })
     .catch(() => {});
+};
+
+const handleDBClick = item => {
+  deviceItemDialogRef.value.show(item, props.deviceId);
 };
 
 onMounted(() => {

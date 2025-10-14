@@ -1,22 +1,28 @@
 <template>
-  <div>
-    <div class="top-btn">
-      <h3>文件列表</h3>
-      <el-button type="primary" @click="handleCreateClass">创建文件</el-button>
-    </div>
-    <div v-if="fileList.length" v-loading="loading" class="card">
-      <div v-for="item in fileList" :key="item.name" class="device-item">
+  <el-dialog
+    v-model="dialogVisible"
+    v-loading="loading"
+    fullscreen
+    :show-close="false"
+  >
+    <template #header>
+      <div class="top">
+        <h3>文件列表 {{ row.name }} 创建</h3>
+        <el-button @click="close">返回</el-button>
+      </div>
+    </template>
+    <el-button type="primary" @click="handleCreate">创建文件</el-button>
+    <div v-if="dataList.length" class="card">
+      <div v-for="item in dataList" :key="item.name" class="device-item">
         <FileItem
           :id="item.id"
           :name="item.name"
           @handleRename="handleRename"
           @handleDelete="handleDelete(item)"
-          @dblclick="handleDBClick(item)"
         />
       </div>
     </div>
-    <el-empty v-else description="暂无数据" style="border: 1px solid #eee" />
-    <FileItemDialog ref="fileItemDialogRef" />
+    <el-empty v-else description="暂无数据" style="height: 90vh" />
 
     <el-dialog
       v-model="dialogFormVisible"
@@ -35,50 +41,43 @@
         </div>
       </template>
     </el-dialog>
-  </div>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive } from "vue";
+import FileItem from "../components/file-item.vue";
 import { ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 import { getFileList, addFile, deleteFile } from "@/api/common";
 import { message } from "@/utils/message";
-import FileItemDialog from "./file-item-dialog.vue";
-import FileItem from "../components/file-item.vue";
 
-const props = defineProps({
-  deviceId: {
-    type: String,
-    default: ""
-  }
-});
-
-const fileItemDialogRef = ref();
 const loading = ref(false);
+const dialogVisible = ref(false);
 const dialogFormVisible = ref(false);
 const formLabelWidth = "80px";
 const dialogClass = ref("add");
+const row = ref();
 const form = reactive({
   name: "",
   id: null
 });
-const fileList = ref([]);
+const dataList = ref([]);
 
 const getListData = async () => {
   loading.value = true;
   const params = {
-    type: "2", // 文件列表（资料模板）
+    type: "4", // 文件列表-文件
     userId: storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? "",
-    parentId: props.deviceId
+    parentId: row.value.id
   };
   const res: any = await getFileList(params);
   loading.value = false;
-  fileList.value = res.data || [];
+  dataList.value = res.data || [];
 };
 
-const handleCreateClass = () => {
+const handleCreate = () => {
   form.name = "";
   dialogClass.value = "add";
   dialogFormVisible.value = true;
@@ -94,9 +93,9 @@ const handleRename = (name, id) => {
 const handleConfirm = async () => {
   const res: any = await addFile({
     name: form.name,
-    type: "2",
+    type: "4",
     userId: storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? "",
-    parentId: props.deviceId,
+    parentId: row.value.id,
     id: form.id
   });
   if (res.code == 1) {
@@ -125,30 +124,34 @@ const handleDelete = item => {
     .catch(() => {});
 };
 
-const handleDBClick = item => {
-  fileItemDialogRef.value.show(item);
+const show = item => {
+  dialogVisible.value = true;
+  row.value = item;
+  getListData();
+};
+const close = () => {
+  dialogVisible.value = false;
+  dataList.value = [];
 };
 
-onMounted(() => {
-  getListData();
+defineExpose({
+  show,
+  close
 });
 </script>
 
 <style scoped lang="scss">
-.top-btn {
+.top {
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
-  margin-bottom: 8px;
 }
 
 .card {
   width: 100%;
-  height: 300px;
+  height: 100%;
   padding-top: 25px;
   padding-left: 20px;
   overflow-y: auto;
-  border: 1px solid #eee;
 
   .device-item {
     display: inline-block;

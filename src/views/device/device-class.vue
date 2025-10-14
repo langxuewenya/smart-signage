@@ -6,23 +6,14 @@
     </div>
     <el-card v-if="dataList.length" v-loading="loading" class="card">
       <div v-for="item in dataList" :key="item.name" class="device-item">
-        <deviceItem
+        <FileItem
           :id="item.id"
           :name="item.name"
           @handleRename="handleRename"
-          @handleDelete="handleDelete"
-          @dblclick="handleClick(item)"
+          @handleDelete="handleDelete(item)"
+          @dblclick="handleDBClick(item)"
         />
       </div>
-      <!-- <el-badge value="已编辑" class="item" type="primary" :offset="[-50, 10]">
-        <deviceItem name="文件1" />
-      </el-badge>
-      <el-badge value="未编辑" class="item" :offset="[-50, 10]">
-        <deviceItem name="文件2" />
-      </el-badge>
-      <el-badge value="已锁定" class="item" type="warning" :offset="[-50, 10]">
-        <deviceItem name="文件3" />
-      </el-badge> -->
     </el-card>
     <el-empty v-else description="暂无数据" style="height: 75vh" />
     <DetailDialog ref="detailDialogRef" />
@@ -49,14 +40,13 @@
 
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from "vue";
-import deviceItem from "../components/device-item.vue";
 import { ElMessageBox } from "element-plus";
-import { useRouter } from "vue-router";
 import { message } from "@/utils/message";
-import { getFileList, addFile } from "@/api/common";
+import { getFileList, addFile, deleteFile } from "@/api/common";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 import DetailDialog from "./detail-dialog.vue";
+import FileItem from "../components/file-item.vue";
 
 const loading = ref(false);
 const dialogFormVisible = ref(false);
@@ -110,31 +100,28 @@ const handleConfirm = async () => {
   }
 };
 
-const handleDelete = name => {
-  ElMessageBox.confirm(`删除后不可恢复，确认删除该类别？`, `删除${name}`, {
-    confirmButtonText: "确认",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
+const handleDelete = item => {
+  ElMessageBox.confirm(
+    `删除后不可恢复，确认删除该设备类别？`,
+    `删除${item.name}`,
+    {
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
+      type: "warning"
+    }
+  )
     .then(async () => {
-      // const deleteRes = await store.dispatch(
-      //   "systemModule/deletePageRowAction",
-      //   {
-      //     pageName: props.pageName,
-      //     queryInfo: {
-      //       id: scope.row.id
-      //     }
-      //   }
-      // );
-      // if (deleteRes.code == 200) {
-      //   ElMessage.success(`删除${props.listTableConfig.title}成功`);
-      //   getPageData(queryCache.value);
-      // }
+      const params = [item.id];
+      const res: any = await deleteFile(params);
+      if (res.code == 1) {
+        message(`删除成功`, { type: "success" });
+        getListData();
+      }
     })
     .catch(() => {});
 };
 
-const handleClick = item => {
+const handleDBClick = item => {
   detailDialogRef.value.show(item);
 };
 
@@ -162,8 +149,4 @@ onMounted(() => {
     margin-bottom: 16px;
   }
 }
-// .card > *:not(:last-child) {
-//   margin-right: 16px;
-//   background-color: red;
-// }
 </style>
