@@ -1,7 +1,9 @@
 <template>
   <div>
     <div class="top-btn">
-      <el-button type="success">标识牌列表</el-button>
+      <el-button type="success" @click="handleToSignboard"
+        >标识牌列表</el-button
+      >
       <el-button type="primary" @click="handleCreateClass">创建类别</el-button>
     </div>
     <el-card v-if="dataList.length" v-loading="loading" class="card">
@@ -17,6 +19,7 @@
     </el-card>
     <el-empty v-else description="暂无数据" style="height: 75vh" />
     <DetailDialog ref="detailDialogRef" />
+    <SignboardList ref="signboardListRef" />
 
     <el-dialog
       v-model="dialogFormVisible"
@@ -46,8 +49,10 @@ import { getFileList, addFile, deleteFile } from "@/api/common";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 import DetailDialog from "./detail-dialog.vue";
+import SignboardList from "./signboard-list.vue";
 import FileItem from "../components/file-item.vue";
 
+const signboardListRef = ref();
 const loading = ref(false);
 const dialogFormVisible = ref(false);
 const formLabelWidth = "100px";
@@ -123,6 +128,10 @@ const handleDelete = item => {
 
 const handleDBClick = item => {
   detailDialogRef.value.show(item);
+};
+
+const handleToSignboard = () => {
+  signboardListRef.value.show();
 };
 
 onMounted(() => {

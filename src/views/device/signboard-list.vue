@@ -1,0 +1,166 @@
+<template>
+  <el-dialog
+    v-model="dialogVisible"
+    v-loading="loading"
+    fullscreen
+    :show-close="false"
+  >
+    <div class="top">
+      <h3>标识牌列表</h3>
+      <el-button @click="close">返回</el-button>
+    </div>
+    <div class="top-btn">
+      <el-input
+        v-model="searchValue"
+        class="search"
+        placeholder="请输入关键词搜索"
+        clearable
+        :prefix-icon="Search"
+        @click="handleSearch"
+      />
+      <el-button type="primary" @click="getListData">搜索</el-button>
+      <el-button @click="getListData">刷新</el-button>
+    </div>
+    <pure-table
+      :data="dataList"
+      :columns="columns"
+      :loading="loading"
+      style="height: 85vh"
+    >
+      <template #signboard="{ row }">
+        <SignboardItem :info="row" :showFileds="showFileds" />
+      </template>
+      <template #option="{ row }">
+        <!-- <el-button type="success" @click="handleCopySignboard(row)"
+          >复制标识牌</el-button
+        >
+        <el-button type="warning" @click="handleCopyQRCode(row)"
+          >复制二维码</el-button
+        > -->
+        <el-button type="danger" @click="handleDelete(row)">删除</el-button>
+      </template>
+    </pure-table>
+  </el-dialog>
+</template>
+
+<script lang="ts" setup>
+import { ref } from "vue";
+import { Search } from "@element-plus/icons-vue";
+import SignboardItem from "../components/signboard-item.vue";
+import { getInfoFieldList, getSignboardList } from "@/api/common";
+import { storageLocal } from "@pureadmin/utils";
+import { type DataInfo, userKey } from "@/utils/auth";
+import { configContentMap } from "@/views/common";
+
+const emit = defineEmits([]);
+
+/** 当前对话框 **/
+const dialogVisible = ref(false);
+const loading = ref(false);
+const show = () => {
+  getShowFields();
+  getListData();
+  dialogVisible.value = true;
+};
+const close = () => {
+  dialogVisible.value = false;
+};
+defineExpose({
+  show,
+  close
+});
+
+/** 搜索栏 */
+const searchValue = ref("");
+const handleSearch = () => {};
+
+/** 标识牌展示信息字段 */
+const showFileds = ref([]);
+const getShowFields = async () => {
+  showFileds.value = [];
+  const res: any = await getInfoFieldList({
+    userId: userId.value
+  });
+  if (res.code == 1) {
+    const shows = res.data.find(item => item.tagType == "3");
+    Object.keys(shows).map(item => {
+      if (shows[item] && configContentMap.has(item)) {
+        showFileds.value.push({
+          label: configContentMap.get(item),
+          value: item
+        });
+      }
+    });
+  }
+};
+
+/** 列表数据 */
+const userId = ref(
+  storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? ""
+);
+const dataList = ref([]);
+const columns = ref([
+  {
+    prop: "",
+    label: "标识牌",
+    align: "center",
+    width: 600,
+    slot: "signboard"
+  },
+  {
+    prop: "",
+    label: "操作",
+    align: "center",
+    minWidth: 150,
+    slot: "option"
+  }
+]);
+const getListData = async () => {
+  loading.value = true;
+  const res: any = await getSignboardList({
+    id: ""
+  });
+  loading.value = false;
+  console.log(res);
+  dataList.value = res.data || [];
+};
+const handleCopySignboard = row => {};
+const handleCopyQRCode = row => {};
+const handleDelete = row => {};
+
+/** 分页器 */
+// const pagination = ref({
+//   pageSize: 10,
+//   currentPage: 1,
+//   // total: 0,
+//   background: true, // 是否带背景
+//   layout: "total, prev, pager, next, sizes"
+// });
+// const handleSizeChange = (size: number) => {
+//   pagination.value.pageSize = size;
+//   pagination.value.currentPage = 1;
+//   getListData();
+// };
+// const handleCurrentChange = (page: number) => {
+//   pagination.value.currentPage = page;
+//   getListData();
+// };
+</script>
+
+<style scoped lang="scss">
+.top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.top-btn {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+
+  .search {
+    width: 300px;
+    margin-right: 10px;
+  }
+}
+</style>

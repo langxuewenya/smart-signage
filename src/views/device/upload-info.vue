@@ -19,38 +19,33 @@
       class="upload-excel"
       action="/api/fileInfo/upload"
       :data="{ userId: userId }"
+      :show-file-list="false"
       accept="image/*,video/*,audio/*,application/pdf"
       multiple
-      list-type="picture-card"
       :on-success="handleUploadSuccess"
       :on-preview="handlePictureCardPreview"
       :before-upload="beforeUpload"
     >
       <template v-slot:trigger>
-        <el-icon><UploadFilled /></el-icon> 上传资料
+        <el-button type="primary" :icon="Upload">上传资料</el-button>
+      </template>
+      <template #tip>
+        <div class="el-upload__tip text-gray-500 text-sm mt-1">
+          仅支持图片、视频、音频、PDF文件，最大5GB!
+        </div>
       </template>
     </el-upload>
     <el-dialog v-model="dialogImgVisible">
       <img w-full :src="dialogImageUrl" alt="Preview Image" />
     </el-dialog>
-    <!-- <FileUpload
-      v-if="dialogVisible"
-      v-model:file-list="fileList"
-      action="/api/fileInfo/upload"
-      :limit="5"
-      :data="{ userId: userId }"
-      :maxSizeMB="100"
-      @success="handleUploadSuccess"
-      @update:fileList="files = $event"
-    /> -->
     <div v-if="dataList.length" class="card">
       <div v-for="item in dataList" :key="item.name" class="device-item">
         <FileItem
           :id="item.id"
-          :name="item.name"
+          :name="item.fileName"
           :hasRename="false"
           :hasDownload="true"
-          @handleDownload="handleDownload"
+          @handleDownload="handleDownload(item)"
           @handleDelete="handleDelete(item)"
         />
       </div>
@@ -60,16 +55,15 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, useId } from "vue";
+import { ref } from "vue";
 import FileItem from "../components/file-item.vue";
 import { ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 import { getDatumList, fileUploadSave, fileUploadDelete } from "@/api/common";
 import { message } from "@/utils/message";
-import FileUpload from "../components/file-upload.vue";
-import type { UploadProps } from "element-plus";
-import { Upload, UploadFilled } from "@element-plus/icons-vue";
+import { Upload } from "@element-plus/icons-vue";
+import axios from "axios";
 
 const emit = defineEmits(["handleUpdate"]);
 
@@ -77,7 +71,6 @@ const uploadRef = ref();
 const loading = ref(false);
 const dialogVisible = ref(false);
 const dialogImgVisible = ref(false);
-const dialogFormVisible = ref(false);
 const dialogImageUrl = ref("");
 const row = ref();
 const dataList = ref([]);
@@ -86,7 +79,6 @@ const fileKeys = ref([]);
 const userId = ref(
   storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? ""
 );
-const successCount = ref(0); // 成功上传数量
 
 const getListData = async () => {
   loading.value = true;
@@ -120,8 +112,6 @@ const handleDelete = item => {
 
 function handleUploadSuccess(res, file, fileLists) {
   fileKeys.value = res.data.fileKeys;
-  console.log("fileKeys.value", fileKeys.value);
-  console.log("fileLists", fileLists);
   saveUploadFile();
 }
 
@@ -151,24 +141,6 @@ const saveUploadFile = async () => {
 const handleBack = async () => {
   close();
   emit("handleUpdate");
-  // loading.value = true;
-  // const list = fileKeys.value.map(item => {
-  //   return {
-  //     fileKey: item,
-  //     deviceCategoryId: row.value.id
-  //   };
-  // });
-  // const params = {
-  //   fileInfoList: list,
-  //   userId: userId.value
-  // };
-  // const res: any = await fileUploadSave(params);
-  // loading.value = false;
-  // if (res.code === 1) {
-  //   message(`锁定成功`, { type: "success" });
-  //   emit("handleUpdate");
-  //   close();
-  // }
 };
 
 const handleLock = async () => {
@@ -193,7 +165,35 @@ const handleLock = async () => {
 };
 
 // 资料下载
-const handleDownload = () => {};
+const handleDownload = async item => {
+  try {
+    const res: any = await axios({
+      url: `/api/fileInfo/download/${item.id}`,
+      method: "GET",
+      responseType: "blob", // 关键点
+      onDownloadProgress: progressEvent => {
+        const percent = Math.round(
+          (progressEvent.loaded / progressEvent.total) * 100
+        );
+        console.log("下载进度:", percent + "%");
+      }
+    });
+
+    // 创建下载链接
+    const blob = new Blob([res]);
+    // const blob = new Blob([res.data]);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = item.fileName; // 自定义文件名
+    a.click();
+
+    // 释放内存
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("下载失败：", error);
+  }
+};
 
 const handlePictureCardPreview = uploadFile => {
   dialogImageUrl.value = uploadFile.url!;

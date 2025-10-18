@@ -1,6 +1,6 @@
 export const configContentMap = new Map([
-  ["tagNum", "设备标签号"],
   ["deviceName", "设备名称"],
+  ["tagNum", "设备标签号"],
   ["specsModel", "规格型号"],
   ["drawingNo", "图纸号/物料号"],
   ["factoryNo", "出厂编码"],

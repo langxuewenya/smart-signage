@@ -83,3 +83,22 @@ export const fileUploadDelete = (data?: object) => {
     data
   });
 };
+
+/** 资料下载 */
+export const fileDownload = (params?: string) => {
+  return http.request("post", `/api/fileInfo/download/${params}`);
+};
+
+/** 查询标识牌列表 */
+export const getSignboardList = (data?: object) => {
+  return http.request("post", "/api/sys/qrcodeInfo/getInfoList", {
+    data
+  });
+};
+
+/** 查询引用列表 */
+export const getImportTypeList = (data?: object) => {
+  return http.request("post", "/api/sys/deviceCategory/getQuoteTypeList", {
+    data
+  });
+};
