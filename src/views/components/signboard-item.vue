@@ -2,9 +2,14 @@
   <div class="signboard-item">
     <!-- 左侧公司LOGO与二维码区域 -->
     <div class="left">
-      <div class="logo">公司LOGO</div>
+      <div class="logo">
+        公司LOGO
+        <!-- <img :src="info.logoUrl" /> -->
+      </div>
       <div class="qr-section">
-        <div class="qr-placeholder">QR</div>
+        <div class="qr-placeholder">
+          <canvas id="myCanvas" ref="qrcode" />
+        </div>
       </div>
     </div>
 
@@ -19,7 +24,10 @@
 </template>
 
 <script lang="ts" setup>
-import { defineProps } from "vue";
+import { defineProps, ref } from "vue";
+import QRCode from "qrcode";
+import { storageLocal } from "@pureadmin/utils";
+import { type DataInfo, userKey } from "@/utils/auth";
 
 const props = defineProps({
   info: {
@@ -31,6 +39,30 @@ const props = defineProps({
     default: () => []
   }
 });
+
+const qrcode = ref<HTMLCanvasElement | null>(null);
+
+const generateQr = item => {
+  let enterType = "";
+  if (
+    storageLocal().getItem<DataInfo<number>>(userKey)?.roles.includes("jinfeng")
+  ) {
+    enterType = "jinfeng";
+  } else {
+    enterType = "universal";
+  }
+  QRCode.toCanvas(
+    qrcode.value,
+    `http://192.168.0.101:8848/#/download?enterType=${enterType}?deviceId=${item.id}`
+  );
+  const canvas = document.getElementById("myCanvas");
+  canvas.style.width = 110 + "px";
+  canvas.style.height = 110 + "px";
+};
+
+defineExpose({
+  generateQr
+});
 </script>
 
 <style scoped lang="scss">
@@ -40,9 +72,9 @@ const props = defineProps({
   justify-content: space-between;
   padding: 10px 20px;
   font-family: "Microsoft YaHei", sans-serif;
-  color: #0f0;
-  background: #1a1a1a;
-  border: 2px solid #0f0;
+  color: rgb(0 255 0);
+  background: rgb(26 26 26);
+  border: 2px solid rgb(0 255 0);
   border-radius: 6px;
 
   .left {
@@ -52,7 +84,7 @@ const props = defineProps({
     justify-content: center;
     width: 30%;
     padding-right: 20px;
-    border-right: 2px solid #0f0;
+    border-right: 2px solid rgb(0 255 0);
 
     .logo {
       margin-bottom: 20px;
@@ -69,7 +101,8 @@ const props = defineProps({
         justify-content: center;
         width: 100px;
         height: 100px;
-        border: 2px solid #0f0;
+        background-color: rgb(255 255 255);
+        border: 2px solid rgb(0 255 0);
       }
     }
   }
@@ -88,7 +121,7 @@ const props = defineProps({
 
       .label {
         width: 110px;
-        color: white;
+        color: rgb(255 255 255);
         text-align: right;
       }
 

@@ -7,7 +7,7 @@
     <div v-if="dialogVisible" style="margin: 25px 20px 10px">
       <fileList :deviceId="deviceId" />
       <deviceType :deviceId="deviceId" />
-      <deviceList :deviceId="deviceId" />
+      <deviceList :deviceId="deviceId" @handleBack="close" />
     </div>
   </el-dialog>
 </template>

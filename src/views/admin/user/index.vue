@@ -58,13 +58,9 @@
           >配置标识牌录入信息</el-button
         >
       </template>
+      <!-- :disabled="row.status !== '待审核'" -->
       <template #option="{ row }">
-        <el-button
-          type="primary"
-          :disabled="row.status !== '待审核'"
-          @click="handleSave(row)"
-          >保存</el-button
-        >
+        <el-button type="primary" @click="handleSave(row)">保存</el-button>
       </template>
     </pure-table>
     <ConfigDialog ref="configDialogRef" @saveConfig="saveConfig" />

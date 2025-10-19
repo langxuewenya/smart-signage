@@ -102,3 +102,10 @@ export const getImportTypeList = (data?: object) => {
     data
   });
 };
+
+/** 生成标识盘 */
+export const generateQrCode = (data?: object) => {
+  return http.request("post", "/api/sys/qrcodeInfo/generationQrCode", {
+    data
+  });
+};

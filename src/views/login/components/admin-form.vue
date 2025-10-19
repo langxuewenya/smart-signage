@@ -70,8 +70,8 @@ const loading = ref(false);
 const disabled = ref(false);
 
 const ruleForm = reactive({
-  username: "admin",
-  password: "123456"
+  username: "",
+  password: ""
 });
 
 const onLogin = async (formEl: FormInstance | undefined) => {

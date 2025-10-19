@@ -43,6 +43,7 @@
         <FileItem
           :id="item.id"
           :name="item.fileName"
+          :type="item.fileType"
           :hasRename="false"
           :hasDownload="true"
           @handleDownload="handleDownload(item)"
@@ -145,7 +146,7 @@ const handleBack = async () => {
 
 const handleLock = async () => {
   loading.value = true;
-  const list = fileList.value.map(item => {
+  const list = dataList.value.map(item => {
     return {
       fileKey: item.fileKey,
       deviceCategoryId: row.value.id
@@ -153,7 +154,8 @@ const handleLock = async () => {
   });
   const params = {
     fileInfoList: list,
-    userId: userId.value
+    userId: userId.value,
+    type: "已锁定"
   };
   const res: any = await fileUploadSave(params);
   loading.value = false;

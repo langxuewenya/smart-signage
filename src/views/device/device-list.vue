@@ -23,6 +23,7 @@
           :details="details"
           @handleUpdate="handleUpdate"
           @handleDelete="handleDelete(item)"
+          @handleCheck="handleCheck(item)"
         />
       </div>
     </div>
@@ -67,6 +68,7 @@
             :on-success="handleUploadSuccess"
             :before-upload="beforeUpload"
             :on-remove="handleRemoveImg"
+            :on-exceed="handleExceed"
           >
             <template v-slot:trigger>
               <el-button :icon="Plus">上传图片</el-button>
@@ -95,7 +97,7 @@
           </el-select>
         </el-form-item>
         <!-- 上传资料 -->
-        <el-form-item label="LOGO" :label-width="formLabelWidth">
+        <el-form-item label="设备资料" :label-width="formLabelWidth">
           <el-upload
             ref="uploadDatumRef"
             class="upload-excel"
@@ -119,7 +121,7 @@
           </el-upload>
         </el-form-item>
         <!-- 选择上传的资料 -->
-        <el-form-item label="已选资料" :label-width="formLabelWidth">
+        <el-form-item label="已选/上传资料" :label-width="formLabelWidth">
           <div class="datum-list">
             <template v-for="item in form.infoFileList" :key="item.fileKey">
               <DatumItem
@@ -133,9 +135,84 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleConfirm(ruleFormRef)">
+          <el-button type="primary" @click="handleConfirm(ruleFormRef, false)">
             确认
           </el-button>
+          <el-button type="primary" @click="handleConfirm(ruleFormRef, true)">
+            确认并预览
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 标识牌核对 -->
+    <el-dialog
+      v-model="dialogCheckVisible"
+      title="标识牌信息核对"
+      width="600"
+      :show-close="false"
+      @closed="handleClosedCheck"
+    >
+      <div>
+        <div class="check-info">
+          <template v-for="item in details" :key="item.value">
+            <div
+              v-if="configContentMap.get(item.value)"
+              class="check-info-item"
+            >
+              <div class="label">{{ item.label }}：</div>
+              <div class="value">{{ checkDevice[item.value] }}</div>
+            </div>
+          </template>
+        </div>
+        <div class="check-info" style="margin-top: 10px">
+          <div v-if="checkDevice?.infoFileList?.length">
+            <template
+              v-for="item in checkDevice.infoFileList"
+              :key="item.fileKey"
+            >
+              <DatumItem :datum="item" />
+            </template>
+          </div>
+          <el-empty
+            v-else
+            description="暂无资料"
+            :image-size="80"
+            style="width: 100%"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="handleCheckToPreview"
+            >标识牌预览</el-button
+          >
+          <el-button @click="handleClosedCheck">返回</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 标识牌预览 -->
+    <el-dialog
+      v-model="dialogPreviewVisible"
+      title="标识牌预览"
+      width="600"
+      :show-close="false"
+      @closed="handleClosedPreview"
+    >
+      <div ref="signboardItemWrapRef">
+        <SignboardItem
+          ref="signboardItemRef"
+          :info="previewDevice"
+          :showFileds="details"
+        />
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="handleGenerateSignboard"
+            >生成标识牌</el-button
+          >
+          <el-button @click="handleClosedPreview">返回</el-button>
         </div>
       </template>
     </el-dialog>
@@ -143,7 +220,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, nextTick } from "vue";
 import { ElMessageBox } from "element-plus";
 import type { FormInstance } from "element-plus";
 import { Search, Upload, Plus } from "@element-plus/icons-vue";
@@ -161,7 +238,8 @@ import { message } from "@/utils/message";
 import { configContentMap } from "@/views/common";
 import DeviceItem from "../components/device-item.vue";
 import DatumItem from "../components/datum-item.vue";
-import UploadInfo from "./upload-info.vue";
+import SignboardItem from "../components/signboard-item.vue";
+import * as htmlToImage from "html-to-image";
 
 /** 页面 */
 const loading = ref(false);
@@ -271,7 +349,10 @@ function handleDelete(item) {
     })
     .catch(() => {});
 }
-async function handleConfirm(formEl: FormInstance | undefined) {
+function handleCheck(item) {
+  handleShowCheck(item);
+}
+async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
   if (!formEl) return;
   await formEl.validate(async valid => {
     if (valid) {
@@ -291,7 +372,12 @@ async function handleConfirm(formEl: FormInstance | undefined) {
         if (res.code == 1) {
           message(`创建设备成功`, { type: "success" });
           dialogFormVisible.value = false;
-          getListData();
+          if (isPreview) {
+            // 进入核对界面
+            handleShowCheck(res.data || {});
+          } else {
+            getListData();
+          }
         }
       } else if (dialogClass.value == "edit") {
         const res: any = await updateFile({
@@ -306,7 +392,12 @@ async function handleConfirm(formEl: FormInstance | undefined) {
         if (res.code == 1) {
           message(`更新设备成功`, { type: "success" });
           dialogFormVisible.value = false;
-          getListData();
+          if (isPreview) {
+            // 进入核对界面
+            handleShowCheck(res.data || {});
+          } else {
+            getListData();
+          }
         }
       }
     }
@@ -384,6 +475,10 @@ function beforeUpload(file: File): Promise<boolean> | boolean {
 
     reader.readAsDataURL(file);
   });
+}
+// 上传图片超出限制
+function handleExceed() {
+  message(`最多上传一张图片，请先删除已上传的图片文件`, { type: "error" });
 }
 function handleRemoveImg() {
   imgFileList.value = [];
@@ -467,6 +562,54 @@ function handleDeleteDatum(datum) {
   uploadDatumList.value.splice(upoladIndex, 1);
 }
 
+/** 标识牌信息核对 */
+const dialogCheckVisible = ref(false);
+const checkDevice = ref(); // 核对的设备信息
+function handleCheckToPreview() {
+  handleClosedCheck();
+  showPreviewDialog(checkDevice.value);
+}
+function handleShowCheck(item) {
+  checkDevice.value = item;
+  dialogCheckVisible.value = true;
+}
+function handleClosedCheck() {
+  dialogCheckVisible.value = false;
+}
+
+/** 标识牌预览 */
+const emit = defineEmits(["handleBack"]);
+const dialogPreviewVisible = ref(false);
+const signboardItemRef = ref();
+const signboardItemWrapRef = ref();
+const previewDevice = ref();
+function showPreviewDialog(item) {
+  previewDevice.value = item;
+  dialogPreviewVisible.value = true;
+  nextTick(() => {
+    signboardItemRef.value.generateQr(item);
+  });
+}
+// 生成标识牌
+async function handleGenerateSignboard() {
+  const targetEl = signboardItemWrapRef.value;
+  htmlToImage
+    .toPng(targetEl)
+    .then(dataUrl => {
+      // 转成图片后传给后端
+      console.log("生成图片成功:", dataUrl);
+    })
+    .catch(error => {
+      console.error("生成失败", error);
+    });
+}
+function handleClosedPreview() {
+  dialogPreviewVisible.value = false;
+}
+function handlePreviewFinish() {
+  emit("handleBack");
+}
+
 onMounted(() => {
   getListData();
   getTypeFilesList();
@@ -528,5 +671,33 @@ onMounted(() => {
   overflow: auto;
   border: solid 1px #dcdfe6;
   border-radius: 5px;
+}
+
+.preview-dialog-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.check-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding: 10px;
+  border: 1px solid #dcdfe6;
+
+  .check-info-item {
+    width: 30%;
+    margin-right: 10px;
+
+    .label {
+      display: inline-block;
+      width: 110px;
+      text-align: right;
+    }
+
+    .value {
+      display: inline-block;
+    }
+  }
 }
 </style>

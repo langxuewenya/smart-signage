@@ -1,16 +1,10 @@
 <template>
-  <div class="datum-item">
+  <div class="datum-item" @click="handleDownload">
     <img v-if="isImage(props.datum)" :src="imageIcon" />
     <img v-else-if="isAudio(props.datum)" :src="audioIcon" />
     <img v-else-if="isVideo(props.datum)" :src="vedioIcon" />
     <img v-else-if="isPdf(props.datum)" :src="pdfIcon" />
     <div class="name">{{ props.datum.fileName }}</div>
-    <el-icon
-      v-if="props.canDelete"
-      class="delete-icon"
-      @click="handleDeleteDatum"
-      ><CircleCloseFilled
-    /></el-icon>
   </div>
 </template>
 
@@ -19,7 +13,6 @@ import imageIcon from "@/assets/icon/image.png";
 import vedioIcon from "@/assets/icon/video.png";
 import audioIcon from "@/assets/icon/audio.png";
 import pdfIcon from "@/assets/icon/pdf.png";
-import { CircleCloseFilled } from "@element-plus/icons-vue";
 
 const props = defineProps({
   datum: {
@@ -32,7 +25,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(["handleDeleteDatum"]);
+const emit = defineEmits(["handleDownload"]);
 
 // 是否为图片
 function isImage(file) {
@@ -56,40 +49,31 @@ function isVideo(file) {
 function isPdf(file) {
   return [".pdf"].includes(file.fileType);
 }
-// 删除
-function handleDeleteDatum() {
-  emit("handleDeleteDatum");
+
+function handleDownload() {
+  emit("handleDownload", props.datum);
 }
 </script>
 
 <style scoped lang="scss">
 .datum-item {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 30%;
   padding: 5px;
   margin: 5px;
+  margin-top: 20px;
 
   img {
-    width: 25px;
-    height: 25px;
+    width: 50px;
+    height: 50px;
   }
 
   .name {
     display: inline-block;
+    margin-top: 5px;
     margin-left: 5px;
-  }
-
-  .delete-icon {
-    display: none;
-  }
-}
-
-.datum-item:hover {
-  color: #ff6565;
-  cursor: pointer;
-
-  .delete-icon {
-    display: inline-block;
-    color: #ff6565;
   }
 }
 </style>

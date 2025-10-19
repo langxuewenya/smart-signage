@@ -47,10 +47,12 @@
 import { ref } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import SignboardItem from "../components/signboard-item.vue";
-import { getInfoFieldList, getSignboardList } from "@/api/common";
+import { getInfoFieldList, getSignboardList, deleteDevice } from "@/api/common";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 import { configContentMap } from "@/views/common";
+import { message } from "@/utils/message";
+import { ElMessageBox } from "element-plus";
 
 const emit = defineEmits([]);
 
@@ -126,7 +128,25 @@ const getListData = async () => {
 };
 const handleCopySignboard = row => {};
 const handleCopyQRCode = row => {};
-const handleDelete = row => {};
+const handleDelete = async row => {
+  ElMessageBox.confirm(
+    `删除后不可恢复，确认删除该标识牌？`,
+    `删除${row.deviceName}`,
+    {
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
+      type: "warning"
+    }
+  )
+    .then(async () => {
+      const res: any = await deleteDevice([row.id]);
+      if (res.code == 1) {
+        message("删除成功", { type: "success" });
+        getListData();
+      }
+    })
+    .catch(() => {});
+};
 
 /** 分页器 */
 // const pagination = ref({

@@ -26,5 +26,15 @@ export default [
         component: () => import("@/layout/redirect.vue")
       }
     ]
+  },
+  {
+    path: "/download",
+    name: "Download",
+    component: () => import("@/views/h5/download.vue"),
+    meta: {
+      title: "资料下载",
+      showLink: false,
+      rank: 101
+    }
   }
 ] satisfies Array<RouteConfigsTable>;
