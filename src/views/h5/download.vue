@@ -1,7 +1,7 @@
 <template>
   <div class="datum-download">
     <div class="device-id">
-      <h1>100402050001</h1>
+      <h1>{{ tagNum }}</h1>
     </div>
     <div class="datum-list">
       <template v-for="item in dataList" :key="item.fileName">
@@ -13,31 +13,19 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
 import H5DatumItem from "../components/h5-datum-item.vue";
+import { h5GetInfoFile } from "@/api/common";
 
-const dataList = ref([
-  {
-    fileName: "test1.jpg",
-    fileType: ".jpg"
-  },
-  {
-    fileName: "test2.jpg",
-    fileType: ".jpg"
-  },
-  {
-    fileName: "test3.mp3",
-    fileType: ".mp3"
-  },
-  {
-    fileName: "test4.mp4",
-    fileType: ".mp4"
-  },
-  {
-    fileName: "test5.pdf",
-    fileType: ".pdf"
-  }
-]);
-function getListData() {}
+const route = useRoute();
+const tagNum = ref();
+const dataList = ref([]);
+async function getListData() {
+  const res: any = await h5GetInfoFile({
+    tagNum: tagNum.value
+  });
+  dataList.value = res.data.qrCodeInfo || [];
+}
 
 // 判断入口
 function getScanEnv() {
@@ -52,7 +40,7 @@ function getScanEnv() {
 }
 
 function handleDownload(item) {
-  console.log("下载", item);
+  downloadFile(`api/fileInfo/download/${item.fileKey}`, item.fileName);
 }
 
 // 下载方法
@@ -81,13 +69,15 @@ function downloadFile(url: string, fileName?: string) {
 
 onMounted(() => {
   const env = getScanEnv();
-  const urlParams = new URLSearchParams(window.location.search);
-  const enterType = urlParams.get("enterType");
+  const enterType = route.query.enterType;
+  tagNum.value = route.query.tagNum;
 
   if (enterType === "jinfeng" && env !== "wecom") {
     alert("请使用企业微信扫码打开此页面");
     window.location.replace("https://work.weixin.qq.com/"); // 可引导用户去企业微信
   }
+
+  getListData();
 });
 </script>
 

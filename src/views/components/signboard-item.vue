@@ -3,8 +3,7 @@
     <!-- 左侧公司LOGO与二维码区域 -->
     <div class="left">
       <div class="logo">
-        公司LOGO
-        <!-- <img :src="info.logoUrl" /> -->
+        <img :src="info.logoUrlAddress" width="50" />
       </div>
       <div class="qr-section">
         <div class="qr-placeholder">
@@ -53,7 +52,7 @@ const generateQr = item => {
   }
   QRCode.toCanvas(
     qrcode.value,
-    `http://192.168.0.101:8848/#/download?enterType=${enterType}?deviceId=${item.id}`
+    `http://192.168.0.101:8848/#/download?enterType=${enterType}&tagNum=${item.tagNum}`
   );
   const canvas = document.getElementById("myCanvas");
   canvas.style.width = 110 + "px";

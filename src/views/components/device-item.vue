@@ -5,7 +5,7 @@
       <img :src="deviceIcon" width="25" height="25" />
       <span>{{ name }}</span>
     </div> -->
-    <img :src="props.device.logoUrl" />
+    <img :src="props.device.logoUrlAddress" />
     <div v-for="item in props.details" :key="item.value" class="info-item">
       <span class="label">{{ item.label }}：</span>
       <span class="value">{{ device[item.value] }}</span>

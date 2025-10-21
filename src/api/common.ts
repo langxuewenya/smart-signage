@@ -109,3 +109,17 @@ export const generateQrCode = (data?: object) => {
     data
   });
 };
+
+/** 标识盘预览图片上传 */
+export const codeInfoFileUpload = (data?: object) => {
+  return http.request("post", "/api/sys/qrcodeInfo/codeInfoFileUpload", {
+    data
+  });
+};
+
+/** H5页面查询资料 */
+export const h5GetInfoFile = (data?: object) => {
+  return http.request("post", "/api/sys/qrcodeInfo/getInfoFile", {
+    data
+  });
+};

@@ -20,7 +20,7 @@
       action="/api/fileInfo/upload"
       :data="{ userId: userId }"
       :show-file-list="false"
-      accept="image/*,video/*,audio/*,application/pdf"
+      accept="image/*,video/*,application/pdf"
       multiple
       :on-success="handleUploadSuccess"
       :on-preview="handlePictureCardPreview"
@@ -31,7 +31,7 @@
       </template>
       <template #tip>
         <div class="el-upload__tip text-gray-500 text-sm mt-1">
-          仅支持图片、视频、音频、PDF文件，最大5GB!
+          仅支持图片、视频、PDF文件，最大5GB!
         </div>
       </template>
     </el-upload>
@@ -168,33 +168,28 @@ const handleLock = async () => {
 
 // 资料下载
 const handleDownload = async item => {
-  try {
-    const res: any = await axios({
-      url: `/api/fileInfo/download/${item.id}`,
-      method: "GET",
-      responseType: "blob", // 关键点
-      onDownloadProgress: progressEvent => {
-        const percent = Math.round(
-          (progressEvent.loaded / progressEvent.total) * 100
-        );
-        console.log("下载进度:", percent + "%");
-      }
+  const fileName = item.fileName;
+  const url = `/api/fileInfo/download/${item.fileKey}`;
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error("下载失败");
+      return res.blob();
+    })
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName || url.split("/").pop() || "file";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    })
+    .catch(err => {
+      console.error("下载出错：", err);
+      message("下载失败，请检查文件链接", { type: "error" });
     });
-
-    // 创建下载链接
-    const blob = new Blob([res]);
-    // const blob = new Blob([res.data]);
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = item.fileName; // 自定义文件名
-    a.click();
-
-    // 释放内存
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("下载失败：", error);
-  }
 };
 
 const handlePictureCardPreview = uploadFile => {
@@ -207,10 +202,9 @@ function beforeUpload(file: File) {
   const isAllowed =
     file.type.startsWith("image/") ||
     file.type.startsWith("video/") ||
-    file.type.startsWith("audio/") ||
     file.type === "application/pdf";
   if (!isAllowed) {
-    message(`仅支持上传图片、视频、音频或 PDF 文件！`, { type: "error" });
+    message(`仅支持上传图片、视频或 PDF 文件！`, { type: "error" });
     return false;
   }
   const isLtMax = file.size / 1024 / 1024 < 5000;

@@ -23,7 +23,6 @@
           :details="details"
           @handleUpdate="handleUpdate"
           @handleDelete="handleDelete(item)"
-          @handleCheck="handleCheck(item)"
         />
       </div>
     </div>
@@ -104,7 +103,7 @@
             action="/api/fileInfo/upload"
             :data="{ userId: userId }"
             :show-file-list="false"
-            accept="image/*,video/*,audio/*,application/pdf"
+            accept="image/*,video/*,application/pdf"
             multiple
             :on-success="handleUploadDatumSuccess"
             :before-upload="beforeUploadDatum"
@@ -115,7 +114,7 @@
             </template>
             <template #tip>
               <div class="el-upload__tip text-gray-500 text-sm mt-1">
-                仅支持图片、视频、音频、PDF文件，最大5GB!
+                仅支持图片、视频、PDF文件，最大5GB!
               </div>
             </template>
           </el-upload>
@@ -165,13 +164,17 @@
             </div>
           </template>
         </div>
-        <div class="check-info" style="margin-top: 10px">
-          <div v-if="checkDevice?.infoFileList?.length">
+        <div style="margin-top: 10px">
+          <div v-if="checkDevice?.infoFileList?.length" class="check-datum">
             <template
               v-for="item in checkDevice.infoFileList"
               :key="item.fileKey"
             >
-              <DatumItem :datum="item" />
+              <DatumItem
+                :datum="item"
+                :canDelete="false"
+                class="check-datum-item"
+              />
             </template>
           </div>
           <el-empty
@@ -310,7 +313,7 @@ function handleUpdate(item) {
     imgFileList.value = [
       {
         name: "已上传图片",
-        url: item.logoUrl
+        url: item.logoUrlAddress
       }
     ];
   }
@@ -349,9 +352,6 @@ function handleDelete(item) {
     })
     .catch(() => {});
 }
-function handleCheck(item) {
-  handleShowCheck(item);
-}
 async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
   if (!formEl) return;
   await formEl.validate(async valid => {
@@ -373,6 +373,7 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
           message(`创建设备成功`, { type: "success" });
           dialogFormVisible.value = false;
           if (isPreview) {
+            getListData();
             // 进入核对界面
             handleShowCheck(res.data || {});
           } else {
@@ -393,6 +394,7 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
           message(`更新设备成功`, { type: "success" });
           dialogFormVisible.value = false;
           if (isPreview) {
+            getListData();
             // 进入核对界面
             handleShowCheck(res.data || {});
           } else {
@@ -530,10 +532,9 @@ function beforeUploadDatum(file: File) {
   const isAllowed =
     file.type.startsWith("image/") ||
     file.type.startsWith("video/") ||
-    file.type.startsWith("audio/") ||
     file.type === "application/pdf";
   if (!isAllowed) {
-    message(`仅支持上传图片、视频、音频或 PDF 文件！`, { type: "error" });
+    message(`仅支持上传图片、视频或 PDF 文件！`, { type: "error" });
     return false;
   }
   const isLtMax = file.size / 1024 / 1024 < 5000;
@@ -570,7 +571,7 @@ function handleCheckToPreview() {
   showPreviewDialog(checkDevice.value);
 }
 function handleShowCheck(item) {
-  checkDevice.value = item;
+  checkDevice.value = deviceList.value.find(i => i.id == item.id);
   dialogCheckVisible.value = true;
 }
 function handleClosedCheck() {
@@ -698,6 +699,18 @@ onMounted(() => {
     .value {
       display: inline-block;
     }
+  }
+}
+
+.check-datum {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding: 10px;
+  border: 1px solid #dcdfe6;
+
+  .check-datum-item {
+    width: 25%;
   }
 }
 </style>
