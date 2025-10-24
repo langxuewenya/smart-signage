@@ -20,6 +20,7 @@
 
     <el-dialog
       v-model="dialogFormVisible"
+      :close-on-click-modal="false"
       :title="`${dialogClass == 'add' ? '创建设备类型' : '重命名'}`"
       width="500"
     >

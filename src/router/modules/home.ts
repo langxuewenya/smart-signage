@@ -4,13 +4,12 @@ import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 
 const redirectUrl = () => {
-  const roles = storageLocal().getItem<DataInfo<number>>(userKey)?.roles;
+  const roles = storageLocal().getItem<DataInfo<number>>(userKey)?.roles || [];
   console.log(roles);
   if (roles.includes("admin")) {
     return "/user-mgr";
-  } else {
-    return "/device-class";
   }
+  return "/device-class";
 };
 
 export default {

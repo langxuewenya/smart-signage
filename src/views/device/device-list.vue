@@ -33,6 +33,7 @@
       v-model="dialogFormVisible"
       :title="`${dialogClass == 'add' ? '创建设备' : '修改设备'}`"
       width="600"
+      :close-on-click-modal="false"
       @closed="handleClosed"
     >
       <el-form ref="ruleFormRef" :model="form">
@@ -45,6 +46,16 @@
                 required: true,
                 message: `请输入${configContentMap.get(key)}`,
                 trigger: 'blur'
+              },
+              {
+                validator: (rule, value, callback) => {
+                  if (value && value.length > 15) {
+                    callback(new Error('输入内容不能超过15个字'));
+                  } else {
+                    callback();
+                  }
+                },
+                trigger: 'blur'
               }
             ]"
             :prop="key"
@@ -54,7 +65,17 @@
             <el-input v-model="form[key]" autocomplete="off" />
           </el-form-item>
         </template>
-        <el-form-item label="LOGO" :label-width="formLabelWidth">
+        <el-form-item
+          label="LOGO"
+          :label-width="formLabelWidth"
+          :rules="[
+            {
+              required: true,
+              message: `请上传logo图片`,
+              trigger: 'blur'
+            }
+          ]"
+        >
           <el-upload
             ref="uploadRef"
             class="upload-excel"
@@ -74,7 +95,7 @@
             </template>
             <template #tip>
               <div class="el-upload__tip text-gray-500 text-sm mt-1">
-                请上传长35，宽14尺寸的图片！
+                请上传长宽比为 35:14 的图片！
               </div>
             </template>
           </el-upload>
@@ -148,7 +169,8 @@
     <el-dialog
       v-model="dialogCheckVisible"
       title="标识牌信息核对"
-      width="600"
+      width="800"
+      :close-on-click-modal="false"
       :show-close="false"
       @closed="handleClosedCheck"
     >
@@ -159,8 +181,8 @@
               v-if="configContentMap.get(item.value)"
               class="check-info-item"
             >
-              <div class="label">{{ item.label }}：</div>
-              <div class="value">{{ checkDevice[item.value] }}</div>
+              <div class="label">{{ item.label }}</div>
+              <div class="value">： {{ checkDevice[item.value] }}</div>
             </div>
           </template>
         </div>
@@ -199,8 +221,9 @@
     <el-dialog
       v-model="dialogPreviewVisible"
       title="标识牌预览"
-      width="600"
+      width="550"
       :show-close="false"
+      :close-on-click-modal="false"
       @closed="handleClosedPreview"
     >
       <div ref="signboardItemWrapRef">
@@ -235,7 +258,8 @@ import {
   addDevice,
   updateFile,
   deleteDevice,
-  getImportTypeList
+  getImportTypeList,
+  codeInfoFileUpload
 } from "@/api/common";
 import { message } from "@/utils/message";
 import { configContentMap } from "@/views/common";
@@ -356,6 +380,10 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
   if (!formEl) return;
   await formEl.validate(async valid => {
     if (valid) {
+      if (!imgFileList.value.length) {
+        message(`请上传logo图片`, { type: "error" });
+        return;
+      }
       if (dialogClass.value == "add") {
         const res: any = await addDevice({
           ...form,
@@ -373,7 +401,7 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
           message(`创建设备成功`, { type: "success" });
           dialogFormVisible.value = false;
           if (isPreview) {
-            getListData();
+            await getListData();
             // 进入核对界面
             handleShowCheck(res.data || {});
           } else {
@@ -394,7 +422,7 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
           message(`更新设备成功`, { type: "success" });
           dialogFormVisible.value = false;
           if (isPreview) {
-            getListData();
+            await getListData();
             // 进入核对界面
             handleShowCheck(res.data || {});
           } else {
@@ -435,8 +463,9 @@ function beforeUpload(file: File): Promise<boolean> | boolean {
     message(`请上传图片文件`, { type: "error" });
     return false;
   }
-  const TARGET_WIDTH = 35; // 要求的尺寸（像素）
-  const TARGET_HEIGHT = 14;
+  // const TARGET_WIDTH = 35; // 要求的尺寸（像素）
+  // const TARGET_HEIGHT = 14;
+  const TARGET_RATIO = 35 / 14;
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -451,11 +480,17 @@ function beforeUpload(file: File): Promise<boolean> | boolean {
       img.onload = () => {
         const w = img.naturalWidth;
         const h = img.naturalHeight;
-        if (w === TARGET_WIDTH && h === TARGET_HEIGHT) {
+
+        const ratio = w / h;
+        const epsilon = 0.01; // 允许一定误差,比如正负1%
+
+        // if (w === TARGET_WIDTH && h === TARGET_HEIGHT) {
+        if (Math.abs(ratio - TARGET_RATIO) <= epsilon) {
           resolve(true); // 允许上传
         } else {
           message(
-            `图片尺寸必须为 ${TARGET_WIDTH}x${TARGET_HEIGHT} 像素，当前为 ${w}x${h}`,
+            `图片宽高比例须为 35：14，当前为 ${w}：${h}`,
+            // `图片尺寸必须为 ${TARGET_WIDTH}x${TARGET_HEIGHT} 像素，当前为 ${w}x${h}`,
             { type: "error" }
           );
           reject(false); // 阻止上传
@@ -494,7 +529,8 @@ const importDatumList = ref([]); // 引用的资料列表
 async function getTypeFilesList() {
   const res: any = await getImportTypeList({
     userId: userId.value,
-    type: "5" //引用文件夹类型
+    type: "5", //引用文件夹类型
+    parentId: props.deviceId
   });
   if (res.code == 1) {
     typeFilesList.value = res.data || [];
@@ -596,9 +632,17 @@ async function handleGenerateSignboard() {
   const targetEl = signboardItemWrapRef.value;
   htmlToImage
     .toPng(targetEl)
-    .then(dataUrl => {
+    .then(async dataUrl => {
       // 转成图片后传给后端
       console.log("生成图片成功:", dataUrl);
+      const res: any = await codeInfoFileUpload({
+        userId: userId.value,
+        uploadBase64Image: dataUrl,
+        qiId: previewDevice.value.id
+      });
+      if (res.code == 1) {
+        message("生成图片成功", { type: "success" });
+      }
     })
     .catch(error => {
       console.error("生成失败", error);
@@ -687,13 +731,13 @@ onMounted(() => {
   border: 1px solid #dcdfe6;
 
   .check-info-item {
-    width: 30%;
+    width: 45%;
     margin-right: 10px;
 
     .label {
       display: inline-block;
-      width: 110px;
-      text-align: right;
+      width: 90px;
+      text-align: left;
     }
 
     .value {

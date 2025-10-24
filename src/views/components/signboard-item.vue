@@ -3,7 +3,7 @@
     <!-- 左侧公司LOGO与二维码区域 -->
     <div class="left">
       <div class="logo">
-        <img :src="info.logoUrlAddress" width="50" />
+        <img :src="info.logoUrlAddress" width="100" />
       </div>
       <div class="qr-section">
         <div class="qr-placeholder">
@@ -15,8 +15,8 @@
     <!-- 右侧设备信息区域 -->
     <div class="right">
       <div v-for="item in showFileds" :key="item.value" class="info-item">
-        <span class="label">{{ item.label }}：</span>
-        <span class="value">{{ info[item.value] }}</span>
+        <span class="label">{{ item.label }}</span>
+        <span class="value">： {{ info[item.value] }}</span>
       </div>
     </div>
   </div>
@@ -55,8 +55,8 @@ const generateQr = item => {
     `http://192.168.0.101:8848/#/download?enterType=${enterType}&tagNum=${item.tagNum}`
   );
   const canvas = document.getElementById("myCanvas");
-  canvas.style.width = 110 + "px";
-  canvas.style.height = 110 + "px";
+  canvas.style.width = 130 + "px";
+  canvas.style.height = 130 + "px";
 };
 
 defineExpose({
@@ -69,10 +69,11 @@ defineExpose({
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 10px;
   font-family: "Microsoft YaHei", sans-serif;
   color: rgb(0 255 0);
-  background: rgb(26 26 26);
+  // background: rgb(26 26 26);
+  background-color: #fff;
   border: 2px solid rgb(0 255 0);
   border-radius: 6px;
 
@@ -83,10 +84,10 @@ defineExpose({
     justify-content: center;
     width: 30%;
     padding-right: 20px;
-    border-right: 2px solid rgb(0 255 0);
+    // border-right: 2px solid rgb(0 255 0);
 
     .logo {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       font-size: 20px;
       font-weight: bold;
     }
@@ -98,10 +99,10 @@ defineExpose({
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100px;
-        height: 100px;
+        width: 90px;
+        height: 90px;
         background-color: rgb(255 255 255);
-        border: 2px solid rgb(0 255 0);
+        // border: 2px solid rgb(0 255 0);
       }
     }
   }
@@ -119,13 +120,16 @@ defineExpose({
       font-size: 14px;
 
       .label {
-        width: 110px;
-        color: rgb(255 255 255);
-        text-align: right;
+        width: 90px;
+        // color: rgb(255 255 255);
+        color: #424141;
+        text-align: left;
       }
 
       .value {
         flex: 1;
+        margin-left: 5px;
+        color: #000;
         text-align: left;
       }
     }

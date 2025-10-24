@@ -98,6 +98,7 @@ function isPdf(file) {
 
   .title {
     display: flex;
+    height: 40px;
 
     img {
       width: 30px;
@@ -106,14 +107,15 @@ function isPdf(file) {
 
     span {
       margin-left: 8px;
-      line-height: 30px;
+      line-clamp: 2;
+      line-height: 40px;
+      line-height: 1.4;
     }
   }
 
   .option {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
   }
 }
 </style>

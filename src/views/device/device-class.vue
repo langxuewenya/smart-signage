@@ -24,6 +24,7 @@
     <el-dialog
       v-model="dialogFormVisible"
       :title="`${dialogClass == 'add' ? '创建设备类别' : '重命名'}`"
+      :close-on-click-modal="false"
       width="500"
     >
       <el-form :model="form">
@@ -156,6 +157,7 @@ onMounted(() => {
     display: inline-block;
     margin-right: 16px;
     margin-bottom: 16px;
+    font-size: 15px;
   }
 }
 </style>

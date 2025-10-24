@@ -111,9 +111,14 @@ export const generateQrCode = (data?: object) => {
 };
 
 /** 标识盘预览图片上传 */
-export const codeInfoFileUpload = (data?: object) => {
+export const codeInfoFileUpload = (data?: any) => {
+  const formData = new FormData();
+  formData.append("userId", data.userId);
+  formData.append("uploadBase64Image", data.uploadBase64Image);
+  formData.append("qlid", data.qlid);
   return http.request("post", "/api/sys/qrcodeInfo/codeInfoFileUpload", {
-    data
+    data: formData, // ✅ 关键是用 data
+    headers: { "Content-Type": "multipart/form-data" }
   });
 };
 

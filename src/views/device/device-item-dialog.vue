@@ -37,6 +37,7 @@
     <!-- 创建文件 -->
     <el-dialog
       v-model="dialogFormVisible"
+      :close-on-click-modal="false"
       :title="`${dialogClass == 'add' ? '创建文件' : '重命名'}`"
       width="500"
     >
@@ -54,7 +55,12 @@
     </el-dialog>
 
     <!-- 引用模板 -->
-    <el-dialog v-model="dialogTemplateVisible" title="引用模板" width="500">
+    <el-dialog
+      v-model="dialogTemplateVisible"
+      :close-on-click-modal="false"
+      title="引用模板"
+      width="500"
+    >
       <el-form :model="form">
         <el-form-item label="文件模板" :label-width="formLabelWidth">
           <el-select v-model="fileTemplate" multiple placeholder="请选择模板">

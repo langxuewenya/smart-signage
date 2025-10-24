@@ -26,6 +26,7 @@
 
     <el-dialog
       v-model="dialogFormVisible"
+      :close-on-click-modal="false"
       :title="`${dialogClass == 'add' ? '创建文件' : '重命名'}`"
       width="500"
     >
