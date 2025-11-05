@@ -106,10 +106,12 @@ function isPdf(file) {
     }
 
     span {
+      display: -webkit-box;
       margin-left: 8px;
-      line-clamp: 2;
-      line-height: 40px;
+      overflow: hidden;
+      -webkit-line-clamp: 2; // 限制显示2行
       line-height: 1.4;
+      -webkit-box-orient: vertical;
     }
   }
 

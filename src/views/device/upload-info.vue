@@ -1,57 +1,37 @@
 <template>
-  <el-dialog
-    v-model="dialogVisible"
-    v-loading="loading"
-    fullscreen
-    :show-close="false"
-  >
+  <el-dialog v-model="dialogVisible" fullscreen :show-close="false">
     <template #header>
       <div class="top">
         <h3>{{ row.name }} 资料上传</h3>
         <div>
-          <el-button type="primary" @click="handleLock">锁定并返回</el-button>
-          <el-button @click="handleBack">返回</el-button>
+          <el-button type="primary" :disabled="loading" @click="handleLock"
+            >锁定并返回</el-button
+          >
+          <el-button :disabled="loading" @click="handleBack">返回</el-button>
         </div>
       </div>
     </template>
-    <el-upload
-      ref="uploadRef"
-      class="upload-excel"
-      action="/api/fileInfo/upload"
-      :data="{ userId: userId }"
-      :show-file-list="false"
-      accept="image/*,video/*,application/pdf"
-      multiple
-      :on-success="handleUploadSuccess"
-      :on-preview="handlePictureCardPreview"
-      :before-upload="beforeUpload"
-    >
-      <template v-slot:trigger>
-        <el-button type="primary" :icon="Upload">上传资料</el-button>
-      </template>
-      <template #tip>
-        <div class="el-upload__tip text-gray-500 text-sm mt-1">
-          仅支持图片、视频、PDF文件，最大5GB!
+    <div v-loading="loading" :element-loading-text="loadingText">
+      <SmartUploader
+        :userId="userId"
+        accept="image/*,video/*,application/pdf"
+        @handleUploadSuccess="handleUploadSuccess"
+      />
+      <div v-if="dataList.length" class="card">
+        <div v-for="item in dataList" :key="item.name" class="device-item">
+          <FileItem
+            :id="item.id"
+            :name="item.fileName"
+            :type="item.fileType"
+            :hasRename="false"
+            :hasDownload="true"
+            @handleDownload="handleDownload(item)"
+            @handleDelete="handleDelete(item)"
+          />
         </div>
-      </template>
-    </el-upload>
-    <el-dialog v-model="dialogImgVisible">
-      <img w-full :src="dialogImageUrl" alt="Preview Image" />
-    </el-dialog>
-    <div v-if="dataList.length" class="card">
-      <div v-for="item in dataList" :key="item.name" class="device-item">
-        <FileItem
-          :id="item.id"
-          :name="item.fileName"
-          :type="item.fileType"
-          :hasRename="false"
-          :hasDownload="true"
-          @handleDownload="handleDownload(item)"
-          @handleDelete="handleDelete(item)"
-        />
       </div>
+      <el-empty v-else description="暂无数据" style="height: 80vh" />
     </div>
-    <el-empty v-else description="暂无数据" style="height: 80vh" />
   </el-dialog>
 </template>
 
@@ -63,16 +43,13 @@ import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 import { getDatumList, fileUploadSave, fileUploadDelete } from "@/api/common";
 import { message } from "@/utils/message";
-import { Upload } from "@element-plus/icons-vue";
-import axios from "axios";
+import SmartUploader from "../components/smart-uploader.vue";
 
 const emit = defineEmits(["handleUpdate"]);
 
-const uploadRef = ref();
 const loading = ref(false);
+const loadingText = ref("");
 const dialogVisible = ref(false);
-const dialogImgVisible = ref(false);
-const dialogImageUrl = ref("");
 const row = ref();
 const dataList = ref([]);
 const fileList = ref([]);
@@ -92,11 +69,15 @@ const getListData = async () => {
 };
 
 const handleDelete = item => {
-  ElMessageBox.confirm(`删除后不可恢复，确认删除该资料？`, `删除${item.name}`, {
-    confirmButtonText: "确认",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
+  ElMessageBox.confirm(
+    `删除后不可恢复，确认删除该资料？`,
+    `删除${item.fileName}`,
+    {
+      confirmButtonText: "确认",
+      cancelButtonText: "取消",
+      type: "warning"
+    }
+  )
     .then(async () => {
       const params = {
         fileKey: item.fileKey,
@@ -111,8 +92,11 @@ const handleDelete = item => {
     .catch(() => {});
 };
 
-function handleUploadSuccess(res, file, fileLists) {
-  fileKeys.value = res.data.fileKeys;
+function handleUploadSuccess(res) {
+  // 根据响应数据兼容
+  fileKeys.value = Array.isArray(res.data.fileKeys)
+    ? res.data.fileKeys
+    : [res.data.fileKey];
   saveUploadFile();
 }
 
@@ -135,7 +119,6 @@ const saveUploadFile = async () => {
   if (res.code === 1) {
     message(`上传成功`, { type: "success" });
     getListData();
-    uploadRef.value!.clearFiles(); // 清空本地上传的文件
   }
 };
 
@@ -166,11 +149,53 @@ const handleLock = async () => {
   }
 };
 
+// 是否为视频
+function isVideo(fileType) {
+  return [".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".mpeg"].includes(
+    fileType
+  );
+}
 // 资料下载
 const handleDownload = async item => {
   const fileName = item.fileName;
-  const url = `/api/fileInfo/download/${item.fileKey}`;
-  fetch(url)
+  console.log(item);
+  // if (item?.fileSize > 5 * 1024 * 1024) {
+  if (isVideo(item.fileType)) {
+    largeDownload(item);
+  } else {
+    const url = `/api/fileInfo/download/${item.fileKey}`;
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error("下载失败");
+        return res.blob();
+      })
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = fileName || url.split("/").pop() || "file";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      })
+      .catch(err => {
+        console.error("下载出错：", err);
+        message("下载失败，请检查文件链接", { type: "error" });
+      });
+  }
+};
+// 大文件下载
+const largeDownload = async item => {
+  const fileName = item.fileName;
+  const url = `/api/api/video/download`;
+  let formdata = new FormData();
+  formdata.append("fileKey", item.fileKey);
+
+  loading.value = true;
+  loadingText.value = "下载中...";
+  await fetch(url, { method: "POST", body: formdata })
     .then(res => {
       if (!res.ok) throw new Error("下载失败");
       return res.blob();
@@ -190,30 +215,9 @@ const handleDownload = async item => {
       console.error("下载出错：", err);
       message("下载失败，请检查文件链接", { type: "error" });
     });
+  loading.value = false;
+  loadingText.value = "";
 };
-
-const handlePictureCardPreview = uploadFile => {
-  dialogImageUrl.value = uploadFile.url!;
-  dialogImgVisible.value = true;
-};
-
-// 上传前校验文件类型和大小
-function beforeUpload(file: File) {
-  const isAllowed =
-    file.type.startsWith("image/") ||
-    file.type.startsWith("video/") ||
-    file.type === "application/pdf";
-  if (!isAllowed) {
-    message(`仅支持上传图片、视频或 PDF 文件！`, { type: "error" });
-    return false;
-  }
-  const isLtMax = file.size / 1024 / 1024 < 5000;
-  if (!isLtMax) {
-    message(`文件大小不能超过5GB！`, { type: "error" });
-    return false;
-  }
-  return true;
-}
 
 const show = item => {
   dataList.value = [];

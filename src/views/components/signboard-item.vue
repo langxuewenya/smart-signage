@@ -1,22 +1,29 @@
 <template>
   <div class="signboard-item">
-    <!-- 左侧公司LOGO与二维码区域 -->
-    <div class="left">
-      <div class="logo">
-        <img :src="info.logoUrlAddress" width="100" />
-      </div>
-      <div class="qr-section">
-        <div class="qr-placeholder">
-          <canvas id="myCanvas" ref="qrcode" />
+    <div class="signboard-item-second-border">
+      <!-- 左侧公司LOGO与二维码区域 -->
+      <div class="left">
+        <div class="logo">
+          <img :src="info.logoUrlAddress" width="173" />
+        </div>
+        <div class="qr-section">
+          <div class="qr-placeholder">
+            <canvas id="myCanvas" ref="qrcode" />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 右侧设备信息区域 -->
-    <div class="right">
-      <div v-for="item in showFileds" :key="item.value" class="info-item">
-        <span class="label">{{ item.label }}</span>
-        <span class="value">： {{ info[item.value] }}</span>
+      <!-- 右侧设备信息区域 -->
+      <div class="right">
+        <div v-for="item in showFileds" :key="item.value" class="info-item">
+          <!-- <span class="label">{{ item.label }}</span> -->
+          <SingleLineJustify
+            v-if="item.label"
+            class="label"
+            :text="item.label"
+          />
+          <span class="value">：{{ info[item.value] }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -27,6 +34,7 @@ import { defineProps, ref } from "vue";
 import QRCode from "qrcode";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
+import SingleLineJustify from "./single-line-justify.vue";
 
 const props = defineProps({
   info: {
@@ -52,11 +60,15 @@ const generateQr = item => {
   }
   QRCode.toCanvas(
     qrcode.value,
-    `http://192.168.0.101:8848/#/download?enterType=${enterType}&tagNum=${item.tagNum}`
+    `http://10.12.67.6/#/download?enterType=${enterType}&tagNum=${item.tagNum}`,
+    // `http://192.168.0.102:8848/#/download?enterType=${enterType}&tagNum=${item.tagNum}`,
+    {
+      margin: 1 // 取消默认边距
+    }
   );
   const canvas = document.getElementById("myCanvas");
-  canvas.style.width = 130 + "px";
-  canvas.style.height = 130 + "px";
+  canvas.style.width = 173 + "px";
+  canvas.style.height = 173 + "px";
 };
 
 defineExpose({
@@ -66,71 +78,74 @@ defineExpose({
 
 <style scoped lang="scss">
 .signboard-item {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  padding: 10px;
+  width: 495px;
+  aspect-ratio: 10 / 6;
+  padding: 6px;
   font-family: "Microsoft YaHei", sans-serif;
-  color: rgb(0 255 0);
-  // background: rgb(26 26 26);
   background-color: #fff;
-  border: 2px solid rgb(0 255 0);
-  border-radius: 6px;
+  border: 1px solid;
 
-  .left {
+  .signboard-item-second-border {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 30%;
-    padding-right: 20px;
-    // border-right: 2px solid rgb(0 255 0);
+    align-items: stretch;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    padding-top: 14px;
+    border: 1px solid;
 
-    .logo {
-      margin-bottom: 10px;
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .qr-section {
-      text-align: center;
-
-      .qr-placeholder {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 90px;
-        height: 90px;
-        background-color: rgb(255 255 255);
-        // border: 2px solid rgb(0 255 0);
-      }
-    }
-  }
-
-  .right {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    padding-left: 10px;
-
-    .info-item {
+    .left {
       display: flex;
-      justify-content: space-between;
-      margin-bottom: 2px;
-      font-size: 14px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: calc(35% + 6px);
 
-      .label {
-        width: 90px;
-        // color: rgb(255 255 255);
-        color: #424141;
-        text-align: left;
+      .logo {
+        margin-top: 5px;
+        margin-bottom: 5px;
+        font-size: 20px;
+        font-weight: bold;
       }
 
-      .value {
-        flex: 1;
-        margin-left: 5px;
-        color: #000;
-        text-align: left;
+      .qr-section {
+        text-align: center;
+
+        .qr-placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: rgb(255 255 255);
+        }
+      }
+    }
+
+    .right {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: space-around;
+      padding-left: 6px;
+
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2px;
+        font-size: 15px;
+
+        .label {
+          width: 100px;
+          color: #424141;
+          text-align: left;
+          text-align: justify;
+        }
+
+        .value {
+          flex: 1;
+          margin-left: 5px;
+          color: #000;
+          text-align: left;
+        }
       }
     }
   }

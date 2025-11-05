@@ -1,5 +1,10 @@
 <template>
-  <el-dialog v-model="dialogVisible" fullscreen :show-close="false">
+  <el-dialog
+    v-model="dialogVisible"
+    fullscreen
+    :show-close="false"
+    @open="handleOpen"
+  >
     <div class="top">
       <h3>{{ deviceName }} 明细</h3>
       <el-button @click="close">返回</el-button>
@@ -23,6 +28,10 @@ const emit = defineEmits([]);
 const dialogVisible = ref(false);
 const deviceName = ref("");
 const deviceId = ref("");
+
+const handleOpen = () => {
+  window.getSelection()?.removeAllRanges();
+};
 
 const show = device => {
   dialogVisible.value = true;

@@ -4,6 +4,7 @@
     v-loading="loading"
     fullscreen
     :show-close="false"
+    @open="handleOpen"
   >
     <template #header>
       <div class="top">
@@ -65,6 +66,10 @@ const form = reactive({
   id: null
 });
 const dataList = ref([]);
+
+const handleOpen = () => {
+  window.getSelection()?.removeAllRanges();
+};
 
 const getListData = async () => {
   loading.value = true;

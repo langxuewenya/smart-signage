@@ -47,16 +47,27 @@
                 message: `请输入${configContentMap.get(key)}`,
                 trigger: 'blur'
               },
-              {
-                validator: (rule, value, callback) => {
-                  if (value && value.length > 15) {
-                    callback(new Error('输入内容不能超过15个字'));
-                  } else {
-                    callback();
+              key == 'deviceName'
+                ? {
+                    validator: (rule, value, callback) => {
+                      if (value && value.length > 11) {
+                        callback(new Error('输入内容不能超过11个字'));
+                      } else {
+                        callback();
+                      }
+                    },
+                    trigger: 'blur'
                   }
-                },
-                trigger: 'blur'
-              }
+                : {
+                    validator: (rule, value, callback) => {
+                      if (value && value.length > 18) {
+                        callback(new Error('输入内容不能超过18个字'));
+                      } else {
+                        callback();
+                      }
+                    },
+                    trigger: 'blur'
+                  }
             ]"
             :prop="key"
             :label="configContentMap.get(key)"
@@ -118,7 +129,12 @@
         </el-form-item>
         <!-- 上传资料 -->
         <el-form-item label="设备资料" :label-width="formLabelWidth">
-          <el-upload
+          <SmartUploader
+            :userId="userId"
+            accept="image/*,video/*,application/pdf"
+            @handleUploadSuccess="handleUploadDatumSuccess"
+          />
+          <!-- <el-upload
             ref="uploadDatumRef"
             class="upload-excel"
             action="/api/fileInfo/upload"
@@ -138,7 +154,7 @@
                 仅支持图片、视频、PDF文件，最大5GB!
               </div>
             </template>
-          </el-upload>
+          </el-upload> -->
         </el-form-item>
         <!-- 选择上传的资料 -->
         <el-form-item label="已选/上传资料" :label-width="formLabelWidth">
@@ -267,6 +283,7 @@ import DeviceItem from "../components/device-item.vue";
 import DatumItem from "../components/datum-item.vue";
 import SignboardItem from "../components/signboard-item.vue";
 import * as htmlToImage from "html-to-image";
+import SmartUploader from "../components/smart-uploader.vue";
 
 /** 页面 */
 const loading = ref(false);
@@ -323,11 +340,13 @@ const form = reactive({
 const uploadRef = ref();
 function handleCreate() {
   getCreateFiles();
+  getTypeFilesList();
   ruleFormRef.value?.resetFields();
   dialogClass.value = "add";
   dialogFormVisible.value = true;
 }
 function handleUpdate(item) {
+  getTypeFilesList();
   dialogClass.value = "edit";
   for (const key of Object.keys(form)) {
     form[key] = item[key];
@@ -556,9 +575,8 @@ const uploadDatumRef = ref();
 const uploadDatumList = ref([]); // 已上传的资料列表
 function handleUploadDatumSuccess(res, file, fileLists) {
   uploadDatumList.value = uploadDatumList.value.concat(
-    res.data.fileInfos || []
+    res.data.fileInfos || res.data || []
   );
-  // uploadDatumList.value.push(res.data.fileInfos || []);
   updateDatumList();
 }
 function handleError(err: any, file: any) {
@@ -584,7 +602,10 @@ function beforeUploadDatum(file: File) {
 /** 所有资料展示 */
 // 更新资料列表
 function updateDatumList() {
-  form.infoFileList = importDatumList.value.concat(uploadDatumList.value);
+  const hasInfoList = form.infoFileList;
+  form.infoFileList = [
+    ...new Set(hasInfoList.concat(importDatumList.value, uploadDatumList.value))
+  ];
 }
 // 删除资料
 function handleDeleteDatum(datum) {
@@ -627,9 +648,23 @@ function showPreviewDialog(item) {
     signboardItemRef.value.generateQr(item);
   });
 }
+// 将外链图片转成 base64 再插入 DOM
+async function toBase64(url) {
+  const res = await fetch(url);
+  console.log("图片 fetch 状态:", res.status, "跨域允许:", res.type); // 👀 看这里
+  const blob = await res.blob();
+  console.log("blob 大小:", blob.size); // 👀 如果是 0，说明没拿到图
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+}
 // 生成标识牌
 async function handleGenerateSignboard() {
   const targetEl = signboardItemWrapRef.value;
+  // const imgBase64 = await toBase64(form.logoUrl);
+  // targetEl.querySelector("img").src = imgBase64;
   htmlToImage
     .toPng(targetEl)
     .then(async dataUrl => {
@@ -646,6 +681,7 @@ async function handleGenerateSignboard() {
     })
     .catch(error => {
       console.error("生成失败", error);
+      message("生成图片失败", { type: "error" });
     });
 }
 function handleClosedPreview() {
@@ -657,7 +693,6 @@ function handlePreviewFinish() {
 
 onMounted(() => {
   getListData();
-  getTypeFilesList();
 });
 </script>
 
@@ -754,7 +789,7 @@ onMounted(() => {
   border: 1px solid #dcdfe6;
 
   .check-datum-item {
-    width: 25%;
+    // width: 25%;
   }
 }
 </style>

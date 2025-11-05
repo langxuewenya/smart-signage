@@ -84,6 +84,8 @@ const loading = ref(false);
 const disabled = ref(false);
 const activeName = ref("enroll");
 
+const emit = defineEmits(["enrollSuccess"]);
+
 const ruleForm = reactive({
   username: "",
   password: "",
@@ -113,6 +115,7 @@ const handleEnroll = async (formEl: FormInstance | undefined) => {
             message("用户已创建成功，请通知超级管理员设置权限", {
               type: "success"
             });
+            emit("enrollSuccess");
           }
         })
         .finally(() => (loading.value = false));

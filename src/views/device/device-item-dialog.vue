@@ -4,6 +4,7 @@
     v-loading="loading"
     fullscreen
     :show-close="false"
+    @open="handleOpen"
   >
     <template #header>
       <div class="top">
@@ -116,6 +117,10 @@ const dataList = ref([]);
 const fileTemplate = ref();
 const fileTemplateList = ref([]);
 const uploadInfoRef = ref();
+
+const handleOpen = () => {
+  window.getSelection()?.removeAllRanges();
+};
 
 const getListData = async () => {
   const params = {

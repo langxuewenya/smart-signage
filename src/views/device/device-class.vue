@@ -59,6 +59,9 @@ const dialogFormVisible = ref(false);
 const formLabelWidth = "100px";
 const dialogClass = ref("add");
 const detailDialogRef = ref();
+const userId = ref(
+  storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? ""
+);
 const form = reactive({
   name: "",
   id: null
@@ -69,7 +72,7 @@ const getListData = async () => {
   loading.value = true;
   const params = {
     type: "1", // 设备类别
-    userId: storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? ""
+    userId: userId.value
   };
   const res: any = await getFileList(params);
   loading.value = false;
@@ -93,7 +96,7 @@ const handleConfirm = async () => {
   const res: any = await addFile({
     name: form.name,
     type: "1",
-    userId: storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? "",
+    userId: userId.value,
     parentId: 0,
     id: form.id
   });

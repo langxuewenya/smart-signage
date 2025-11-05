@@ -28,7 +28,8 @@
       style="height: 85vh"
     >
       <template #signboard="{ row }">
-        <SignboardItem :info="row" :showFileds="showFileds" />
+        <img :src="row.imageUrl" />
+        <!-- <SignboardItem :info="row" :showFileds="showFileds" /> -->
       </template>
       <template #option="{ row }">
         <!-- <el-button type="success" @click="handleCopySignboard(row)"

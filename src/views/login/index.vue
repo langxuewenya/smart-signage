@@ -87,7 +87,7 @@ const hendleRebackLogin = () => {
               <adminForm />
             </el-tab-pane>
           </el-tabs>
-          <enrollFrom v-if="isEnroll" />
+          <enrollFrom v-if="isEnroll" @enrollSuccess="hendleRebackLogin" />
           <updatePwd v-if="isUpdatePwd" />
           <div
             v-if="activeName !== 'admin' && !isEnroll && !isUpdatePwd"
