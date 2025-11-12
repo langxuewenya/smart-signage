@@ -131,11 +131,11 @@ onMounted(() => {
       return;
     } else {
       // 金风-企业微信用户鉴权
-      // const corpId = "你的企业CorpID"; // 企业CorpID
-      // const redirectUri = encodeURIComponent(window.location.href);
-      // const scope = "snsapi_base"; // 静默授权
-      // const state = "STATE";
-      // window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
+      const corpId = "wx124d29551bcf4590"; // 企业CorpID
+      const redirectUri = encodeURIComponent(window.location.href);
+      const scope = "snsapi_base"; // 静默授权
+      const state = "STATE";
+      window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
     }
   }
 
