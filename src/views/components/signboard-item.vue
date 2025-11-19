@@ -60,7 +60,7 @@ const generateQr = item => {
   }
   QRCode.toCanvas(
     qrcode.value,
-    `http://10.12.67.6/#/download?enterType=${enterType}&tagNum=${item.tagNum}`,
+    `https://zhbs.goldwind.com/#/download?enterType=${enterType}&tagNum=${item.tagNum}`,
     // `http://192.168.0.102:8848/#/download?enterType=${enterType}&tagNum=${item.tagNum}`,
     {
       margin: 1 // 取消默认边距

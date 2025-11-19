@@ -127,15 +127,23 @@ onMounted(() => {
   if (enterType === "jinfeng") {
     if (env !== "wecom") {
       alert("请使用企业微信扫码打开此页面");
-      window.location.replace("https://work.weixin.qq.com/");
+      // 用企业微信协议跳转
+      const targetUrl = encodeURIComponent(window.location.href);
+      window.location.href = `wxwork://jump?url=${targetUrl}`;
       return;
+      // window.location.replace("https://work.weixin.qq.com/");
+      // return;
     } else {
       // 金风-企业微信用户鉴权
-      const corpId = "wx124d29551bcf4590"; // 企业CorpID
-      const redirectUri = encodeURIComponent(window.location.href);
-      const scope = "snsapi_base"; // 静默授权
-      const state = "STATE";
-      window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
+      const code = new URLSearchParams(window.location.search).get("code");
+      if (!code) {
+        const corpId = "wx124d29551bcf4590"; // 企业CorpID
+        const redirectUri = encodeURIComponent(window.location.href);
+        const scope = "snsapi_base"; // 静默授权
+        const state = "STATE";
+        window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${corpId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
+      }
+      // 已有code，不再跳转
     }
   }
 

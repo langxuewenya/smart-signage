@@ -406,6 +406,11 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
       if (dialogClass.value == "add") {
         const res: any = await addDevice({
           ...form,
+          codeType: storageLocal()
+            .getItem<DataInfo<number>>(userKey)
+            ?.roles.includes("jinfeng")
+            ? "1"
+            : "2",
           userId: userId.value,
           deviceCategoryId: props.deviceId,
           tagType: "1",
@@ -467,7 +472,6 @@ const imgFileList = ref([]);
 function handleUploadSuccess(res, file) {
   message(`上传成功`, { type: "success" });
   form.logoUrl = res.data?.fileInfos[0].fileKey;
-  // form.logoUrl = `http://10.12.67.6/images/${res.data?.fileInfos[0].fileName}`;
   // 保留最新图片
   imgFileList.value = [
     {

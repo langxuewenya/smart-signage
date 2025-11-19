@@ -152,6 +152,7 @@ async function uploadLargeFile(file: File) {
         console.warn(`分片 ${chunkNumber + 1} 上传失败，重试第 ${attempts} 次`);
         if (attempts >= MAX_RETRY) {
           console.error(`分片 ${chunkNumber + 1} 上传多次失败`);
+          message(`上传失败`, { type: "error" });
           uploading.value = false;
           return;
         }

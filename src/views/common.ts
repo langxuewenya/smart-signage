@@ -1,6 +1,7 @@
 export const configContentMap = new Map([
   ["deviceName", "设备名称"],
-  ["tagNum", "设备标签号"],
+  ["Tag No.", "序列号"],
+  // ["tagNum", "设备标签号"],
   ["specsModel", "规格型号"],
   ["drawingNo", "图纸号/物料号"],
   ["factoryNo", "出厂编码"],
@@ -10,9 +11,9 @@ export const configContentMap = new Map([
   ["produceFactory", "生产厂家"],
   ["factoryTime", "出厂时间"],
   ["devicePerson", "设备负责人"],
-  ["deviceUnit", "设备责任单位"],
-  ["deviceBelongUnit", "设备归属单位"],
-  ["device_category", "设备类别"],
-  ["devicePosition", "设备位置"],
-  ["deviceStatus", "设备状态"]
+  ["Name", "设备责任单位"],
+  ["Mat.Cd.", "设备归属单位"],
+  ["Fact.Cd.", "设备类别"],
+  ["Prod.Dt.", "设备位置"],
+  ["Supp", "设备状态"]
 ]);
