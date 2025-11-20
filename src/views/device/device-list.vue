@@ -242,7 +242,7 @@
       :close-on-click-modal="false"
       @closed="handleClosedPreview"
     >
-      <div ref="signboardItemWrapRef">
+      <div ref="signboardItemWrapRef" style="width: 495px">
         <SignboardItem
           ref="signboardItemRef"
           :info="previewDevice"
@@ -674,10 +674,11 @@ async function handleGenerateSignboard() {
     .then(async dataUrl => {
       // 转成图片后传给后端
       console.log("生成图片成功:", dataUrl);
+      console.log("qlid", previewDevice.value.id);
       const res: any = await codeInfoFileUpload({
         userId: userId.value,
-        uploadBase64Image: dataUrl,
-        qiId: previewDevice.value.id
+        qiId: previewDevice.value.id,
+        uploadBase64Image: dataUrl
       });
       if (res.code == 1) {
         message("生成图片成功", { type: "success" });

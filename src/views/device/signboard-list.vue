@@ -32,10 +32,10 @@
         <!-- <SignboardItem :info="row" :showFileds="showFileds" /> -->
       </template>
       <template #option="{ row }">
-        <!-- <el-button type="success" @click="handleCopySignboard(row)"
+        <el-button type="success" @click="handleCopySignboard(row)"
           >复制标识牌</el-button
         >
-        <el-button type="warning" @click="handleCopyQRCode(row)"
+        <!-- <el-button type="warning" @click="handleCopyQRCode(row)"
           >复制二维码</el-button
         > -->
         <el-button type="danger" @click="handleDelete(row)">删除</el-button>
@@ -48,7 +48,12 @@
 import { ref } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import SignboardItem from "../components/signboard-item.vue";
-import { getInfoFieldList, getSignboardList, deleteDevice } from "@/api/common";
+import {
+  getInfoFieldList,
+  getSignboardList,
+  deleteDevice,
+  fileDownload
+} from "@/api/common";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 import { configContentMap } from "@/views/common";
@@ -127,7 +132,22 @@ const getListData = async () => {
   console.log(res);
   dataList.value = res.data || [];
 };
-const handleCopySignboard = row => {};
+const handleCopySignboard = async row => {
+  try {
+    // 1. 下载图片为 Blob
+    const res = await fetch(row.imageUrl);
+    const blob = await res.blob();
+    // 2. 封装成 ClipboardItem
+    const data = [new ClipboardItem({ [blob.type]: blob })];
+    // 3. 写入剪贴板
+    await navigator.clipboard.write(data);
+
+    message("复制图片成功", { type: "success" });
+  } catch (err) {
+    console.error("复制失败：", err);
+    message("复制图片失败", { type: "error" });
+  }
+};
 const handleCopyQRCode = row => {};
 const handleDelete = async row => {
   ElMessageBox.confirm(
