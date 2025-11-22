@@ -328,7 +328,7 @@ function formatDetails(fileds) {
 }
 
 /** 设备 新增/编辑/删除 */
-const formLabelWidth = "110px";
+const formLabelWidth = "115px";
 const dialogClass = ref("add");
 const dialogFormVisible = ref(false);
 const ruleFormRef = ref<FormInstance>();

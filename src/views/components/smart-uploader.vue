@@ -12,6 +12,7 @@
       :on-remove="handleRemove"
       :on-preview="handlePreview"
       :before-upload="beforeUpload"
+      :on-exceed="handleExceed"
     >
       <el-button :disabled="uploading" type="primary" :icon="Upload"
         >上传资料</el-button
@@ -30,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import axios from "axios";
 import { Upload } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
@@ -51,7 +52,8 @@ const props = defineProps({
 
 const fileList = ref([]);
 const uploadProgress = ref(0);
-const uploading = ref(false);
+const uploadingCount = ref(0);
+const uploading = computed(() => uploadingCount.value > 0);
 
 // 工具函数：生成唯一文件UUID
 function generateUUID() {
@@ -86,8 +88,8 @@ async function uploadSimpleFile(file: File) {
   formData.append("userId", props.userId);
 
   try {
-    uploading.value = true;
-    emit("handleUploading", true);
+    uploadingCount.value++;
+    emit("handleUploading", uploading.value);
     const res = await axios.post(
       "/api/fileInfo/upload",
       // "/api/sys/qrcodeInfo/codeInfoFileUpload",
@@ -95,11 +97,12 @@ async function uploadSimpleFile(file: File) {
     );
     console.log("上传成功:", res.data);
     emit("handleUploadSuccess", res.data);
+    fileList.value = [];
   } catch (err) {
     console.error("上传失败:", err);
   } finally {
-    uploading.value = false;
-    emit("handleUploading", false);
+    uploadingCount.value--;
+    emit("handleUploading", uploading.value);
   }
 }
 
@@ -110,8 +113,8 @@ async function uploadLargeFile(file: File) {
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
   const uploadedChunks = new Set();
 
-  uploading.value = true;
-  emit("handleUploading", true);
+  uploadingCount.value++;
+  emit("handleUploading", uploading.value);
   uploadProgress.value = 0;
 
   let lastResData = []; // 上传成功返回的结果
@@ -158,8 +161,8 @@ async function uploadLargeFile(file: File) {
         if (attempts >= MAX_RETRY) {
           console.error(`分片 ${chunkNumber + 1} 上传多次失败`);
           message(`上传失败`, { type: "error" });
-          uploading.value = false;
-          emit("handleUploading", false);
+          uploadingCount.value--;
+          emit("handleUploading", uploading.value);
           return;
         }
       }
@@ -169,8 +172,9 @@ async function uploadLargeFile(file: File) {
   // 所有分片上传完成后，调用合并接口
   // await mergeChunks(fileId, file.name, totalChunks);
   emit("handleUploadSuccess", lastResData);
-  uploading.value = false;
-  emit("handleUploading", false);
+  fileList.value = [];
+  uploadingCount.value--;
+  emit("handleUploading", uploading.value);
 }
 
 // 调用合并接口
@@ -210,6 +214,13 @@ function beforeUpload(file: File) {
     return false;
   }
   return true;
+}
+
+// 文件超出限制时
+function handleExceed() {
+  message(`文件个数超出限制，最多同时选择${props.limit}个文件`, {
+    type: "error"
+  });
 }
 
 // 文件操作
