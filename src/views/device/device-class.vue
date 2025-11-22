@@ -18,7 +18,7 @@
       </div>
     </el-card>
     <el-empty v-else description="暂无数据" style="height: 75vh" />
-    <DetailDialog ref="detailDialogRef" />
+    <DetailDialog ref="detailDialogRef" @toSignboardList="handleToSignboard" />
     <SignboardList ref="signboardListRef" />
 
     <el-dialog

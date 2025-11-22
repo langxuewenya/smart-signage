@@ -13,7 +13,9 @@
       :on-preview="handlePreview"
       :before-upload="beforeUpload"
     >
-      <el-button type="primary" :icon="Upload">上传资料</el-button>
+      <el-button :disabled="uploading" type="primary" :icon="Upload"
+        >上传资料</el-button
+      >
       <template #tip>
         <div class="el-upload__tip text-gray-500 text-sm mt-1">
           仅支持图片、视频、PDF文件，最大5GB!
@@ -34,7 +36,7 @@ import { Upload } from "@element-plus/icons-vue";
 import { message } from "@/utils/message";
 import { v4 as uuidv4 } from "uuid";
 
-const emit = defineEmits(["handleUploadSuccess"]);
+const emit = defineEmits(["handleUploadSuccess", "handleUploading"]);
 
 // ========== 可配置参数 ==========
 const CHUNK_SIZE = 5 * 1024 * 1024; // 每个分片 5MB
@@ -85,6 +87,7 @@ async function uploadSimpleFile(file: File) {
 
   try {
     uploading.value = true;
+    emit("handleUploading", true);
     const res = await axios.post(
       "/api/fileInfo/upload",
       // "/api/sys/qrcodeInfo/codeInfoFileUpload",
@@ -96,6 +99,7 @@ async function uploadSimpleFile(file: File) {
     console.error("上传失败:", err);
   } finally {
     uploading.value = false;
+    emit("handleUploading", false);
   }
 }
 
@@ -107,6 +111,7 @@ async function uploadLargeFile(file: File) {
   const uploadedChunks = new Set();
 
   uploading.value = true;
+  emit("handleUploading", true);
   uploadProgress.value = 0;
 
   let lastResData = []; // 上传成功返回的结果
@@ -154,6 +159,7 @@ async function uploadLargeFile(file: File) {
           console.error(`分片 ${chunkNumber + 1} 上传多次失败`);
           message(`上传失败`, { type: "error" });
           uploading.value = false;
+          emit("handleUploading", false);
           return;
         }
       }
@@ -164,6 +170,7 @@ async function uploadLargeFile(file: File) {
   // await mergeChunks(fileId, file.name, totalChunks);
   emit("handleUploadSuccess", lastResData);
   uploading.value = false;
+  emit("handleUploading", false);
 }
 
 // 调用合并接口

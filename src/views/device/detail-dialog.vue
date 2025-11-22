@@ -12,7 +12,11 @@
     <div v-if="dialogVisible" style="margin: 25px 20px 10px">
       <fileList :deviceId="deviceId" />
       <deviceType :deviceId="deviceId" />
-      <deviceList :deviceId="deviceId" @handleBack="close" />
+      <deviceList
+        :deviceId="deviceId"
+        @handleBack="close"
+        @toSignboardList="toSignboardList"
+      />
     </div>
   </el-dialog>
 </template>
@@ -23,7 +27,7 @@ import fileList from "./file-list.vue";
 import deviceType from "./device-type.vue";
 import deviceList from "./device-list.vue";
 
-const emit = defineEmits([]);
+const emit = defineEmits(["toSignboardList"]);
 
 const dialogVisible = ref(false);
 const deviceName = ref("");
@@ -40,6 +44,10 @@ const show = device => {
 };
 const close = () => {
   dialogVisible.value = false;
+};
+const toSignboardList = () => {
+  close();
+  emit("toSignboardList");
 };
 
 defineExpose({

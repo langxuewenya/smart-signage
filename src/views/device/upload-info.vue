@@ -4,10 +4,15 @@
       <div class="top">
         <h3>{{ row.name }} 资料上传</h3>
         <div>
-          <el-button type="primary" :disabled="loading" @click="handleLock"
+          <el-button
+            type="primary"
+            :disabled="loading || uploadLoading"
+            @click="handleLock"
             >锁定并返回</el-button
           >
-          <el-button :disabled="loading" @click="handleBack">返回</el-button>
+          <el-button :disabled="loading || uploadLoading" @click="handleBack"
+            >返回</el-button
+          >
         </div>
       </div>
     </template>
@@ -16,8 +21,9 @@
         :userId="userId"
         accept="image/*,video/*,application/pdf"
         @handleUploadSuccess="handleUploadSuccess"
+        @handleUploading="changeUploadLoading"
       />
-      <div v-if="dataList.length" class="card">
+      <div v-if="dataList.length" v-loading="uploadLoading" class="card">
         <div v-for="item in dataList" :key="item.name" class="device-item">
           <FileItem
             :id="item.id"
@@ -49,6 +55,7 @@ const emit = defineEmits(["handleUpdate"]);
 
 const loading = ref(false);
 const loadingText = ref("");
+const uploadLoading = ref(false);
 const dialogVisible = ref(false);
 const row = ref();
 const dataList = ref([]);
@@ -98,6 +105,9 @@ function handleUploadSuccess(res) {
     ? res.data.fileKeys
     : [res.data.fileKey];
   saveUploadFile();
+}
+function changeUploadLoading(value) {
+  uploadLoading.value = value;
 }
 
 // 保存资料（上传后即保存，状态为已编辑）

@@ -391,6 +391,8 @@ function handleDelete(item) {
       if (res.code == 1) {
         message(`删除成功`, { type: "success" });
         getListData();
+      } else {
+        message(res.message, { type: "error" });
       }
     })
     .catch(() => {});
@@ -424,6 +426,8 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
         if (res.code == 1) {
           message(`创建设备成功`, { type: "success" });
           dialogFormVisible.value = false;
+          form.logoUrl = ""; // 清除已上传图片
+          imgFileList.value = [];
           if (isPreview) {
             await getListData();
             // 进入核对界面
@@ -431,6 +435,8 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
           } else {
             getListData();
           }
+        } else {
+          message(res.message, { type: "error" });
         }
       } else if (dialogClass.value == "edit") {
         const res: any = await updateFile({
@@ -445,6 +451,8 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
         if (res.code == 1) {
           message(`更新设备成功`, { type: "success" });
           dialogFormVisible.value = false;
+          form.logoUrl = ""; // 清除已上传图片
+          imgFileList.value = [];
           if (isPreview) {
             await getListData();
             // 进入核对界面
@@ -452,6 +460,8 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
           } else {
             getListData();
           }
+        } else {
+          message(res.message, { type: "error" });
         }
       }
     }
@@ -557,6 +567,8 @@ async function getTypeFilesList() {
   });
   if (res.code == 1) {
     typeFilesList.value = res.data || [];
+  } else {
+    message(res.message, { type: "error" });
   }
 }
 function handleChangeTypeTem(list) {
@@ -640,7 +652,7 @@ function handleClosedCheck() {
 }
 
 /** 标识牌预览 */
-const emit = defineEmits(["handleBack"]);
+const emit = defineEmits(["handleBack", "toSignboardList"]);
 const dialogPreviewVisible = ref(false);
 const signboardItemRef = ref();
 const signboardItemWrapRef = ref();
@@ -674,14 +686,16 @@ async function handleGenerateSignboard() {
     .then(async dataUrl => {
       // 转成图片后传给后端
       console.log("生成图片成功:", dataUrl);
-      console.log("qlid", previewDevice.value.id);
       const res: any = await codeInfoFileUpload({
         userId: userId.value,
-        qiId: previewDevice.value.id,
+        qlid: previewDevice.value.id,
         uploadBase64Image: dataUrl
       });
       if (res.code == 1) {
         message("生成图片成功", { type: "success" });
+        toSignboardList();
+      } else {
+        message(res.message, { type: "error" });
       }
     })
     .catch(error => {
@@ -692,8 +706,9 @@ async function handleGenerateSignboard() {
 function handleClosedPreview() {
   dialogPreviewVisible.value = false;
 }
-function handlePreviewFinish() {
-  emit("handleBack");
+function toSignboardList() {
+  handleClosedPreview();
+  emit("toSignboardList");
 }
 
 onMounted(() => {
