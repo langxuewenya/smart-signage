@@ -171,10 +171,18 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleConfirm(ruleFormRef, false)">
+          <el-button
+            type="primary"
+            :disabled="isShow"
+            @click="handleConfirm(ruleFormRef, false)"
+          >
             确认
           </el-button>
-          <el-button type="primary" @click="handleConfirm(ruleFormRef, true)">
+          <el-button
+            type="primary"
+            :disabled="isShow"
+            @click="handleConfirm(ruleFormRef, true)"
+          >
             确认并预览
           </el-button>
         </div>
@@ -192,7 +200,7 @@
     >
       <div>
         <div class="check-info">
-          <template v-for="item in details" :key="item.value">
+          <template v-for="item in signboardFields" :key="item.value">
             <div
               v-if="configContentMap.get(item.value)"
               class="check-info-item"
@@ -225,7 +233,10 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleCheckToPreview"
+          <el-button
+            v-loading="previewLoading"
+            type="primary"
+            @click="handleCheckToPreview"
             >标识牌预览</el-button
           >
           <el-button @click="handleClosedCheck">返回</el-button>
@@ -246,12 +257,15 @@
         <SignboardItem
           ref="signboardItemRef"
           :info="previewDevice"
-          :showFileds="details"
+          :showFileds="signboardFields"
         />
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleGenerateSignboard"
+          <el-button
+            v-loading="generateLoading"
+            type="primary"
+            @click="handleGenerateSignboard"
             >生成标识牌</el-button
           >
           <el-button @click="handleClosedPreview">返回</el-button>
@@ -293,6 +307,7 @@ const props = defineProps({
     default: ""
   }
 });
+const signboardFields = ref([]); // 标识牌展示信息字段
 
 /** 列表数据 */
 const searchWord = ref("");
@@ -332,6 +347,7 @@ const formLabelWidth = "115px";
 const dialogClass = ref("add");
 const dialogFormVisible = ref(false);
 const ruleFormRef = ref<FormInstance>();
+const isShow = ref(false); // 是否仅能查看
 const form = reactive({
   logoUrl: "",
   id: "",
@@ -339,13 +355,15 @@ const form = reactive({
 });
 const uploadRef = ref();
 function handleCreate() {
-  getCreateFiles();
+  // getCreateFiles();
   getTypeFilesList();
   ruleFormRef.value?.resetFields();
   dialogClass.value = "add";
   dialogFormVisible.value = true;
+  isShow.value = false;
 }
-function handleUpdate(item) {
+function handleUpdate(item, isShowFlag) {
+  isShow.value = isShowFlag;
   getTypeFilesList();
   dialogClass.value = "edit";
   for (const key of Object.keys(form)) {
@@ -362,16 +380,27 @@ function handleUpdate(item) {
   }
   dialogFormVisible.value = true;
 }
-// 获取设备可录入信息字段
-async function getCreateFiles() {
+// 获取设备信息字段
+async function getFiles() {
   const res: any = await getInfoFieldList({
     userId: userId.value
   });
-  const createConfig = res.data.find(item => item.tagType == 1);
+  const createConfig = res.data.find(item => item.tagType == 1); // 设备列表创建录入信息
+  // const listShowConfig = res.data.find(item => item.tagType == 2); // 设备列表显示信息
+  const SignboardListConfig = res.data.find(item => item.tagType == 3); // 标识牌展示信息
   // 匹配设备列表创建录入信息字段
   for (const [key] of configContentMap) {
     if (createConfig[key]) {
       form[key] = "";
+    }
+  }
+  // 匹配标识牌展示信息字段
+  for (const [key, value] of configContentMap) {
+    if (SignboardListConfig[key]) {
+      signboardFields.value.push({
+        value: key,
+        label: value
+      });
     }
   }
 }
@@ -653,6 +682,8 @@ function handleClosedCheck() {
 
 /** 标识牌预览 */
 const emit = defineEmits(["handleBack", "toSignboardList"]);
+const previewLoading = ref(false);
+const generateLoading = ref(false);
 const dialogPreviewVisible = ref(false);
 const signboardItemRef = ref();
 const signboardItemWrapRef = ref();
@@ -678,19 +709,25 @@ async function toBase64(url) {
 }
 // 生成标识牌
 async function handleGenerateSignboard() {
+  // 生成二维码图片base64地址
+  const qrImgUrl = await signboardItemRef.value.generateQrImg();
+  console.log("二维码图片：", qrImgUrl);
   const targetEl = signboardItemWrapRef.value;
-  // const imgBase64 = await toBase64(form.logoUrl);
-  // targetEl.querySelector("img").src = imgBase64;
   htmlToImage
     .toPng(targetEl)
     .then(async dataUrl => {
       // 转成图片后传给后端
       console.log("生成图片成功:", dataUrl);
+      previewLoading.value = true;
+      generateLoading.value = true;
       const res: any = await codeInfoFileUpload({
         userId: userId.value,
         qlid: previewDevice.value.id,
-        uploadBase64Image: dataUrl
+        uploadBase64Image: dataUrl,
+        qrcode: qrImgUrl // 二维码base64图片
       });
+      previewLoading.value = false;
+      generateLoading.value = false;
       if (res.code == 1) {
         message("生成图片成功", { type: "success" });
         toSignboardList();
@@ -713,6 +750,7 @@ function toSignboardList() {
 
 onMounted(() => {
   getListData();
+  getFiles();
 });
 </script>
 

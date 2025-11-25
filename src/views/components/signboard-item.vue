@@ -35,6 +35,7 @@ import QRCode from "qrcode";
 import { storageLocal } from "@pureadmin/utils";
 import { type DataInfo, userKey } from "@/utils/auth";
 import SingleLineJustify from "./single-line-justify.vue";
+import * as htmlToImage from "html-to-image";
 
 const props = defineProps({
   info: {
@@ -71,8 +72,17 @@ const generateQr = item => {
   canvas.style.height = 173 + "px";
 };
 
+// 生成二维码图片
+function generateQrImg() {
+  const targetEl = qrcode.value;
+  return htmlToImage.toPng(targetEl).then(async dataUrl => {
+    return dataUrl;
+  });
+}
+
 defineExpose({
-  generateQr
+  generateQr,
+  generateQrImg
 });
 </script>
 

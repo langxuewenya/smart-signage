@@ -29,7 +29,6 @@
     >
       <template #signboard="{ row }">
         <img :src="row.imageUrl" />
-        <!-- <SignboardItem :info="row" :showFileds="showFileds" /> -->
       </template>
       <template #option="{ row }">
         <el-button type="success" @click="handleCopySignboard(row)"
@@ -47,16 +46,7 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 import { Search } from "@element-plus/icons-vue";
-import SignboardItem from "../components/signboard-item.vue";
-import {
-  getInfoFieldList,
-  getSignboardList,
-  deleteDevice,
-  fileDownload
-} from "@/api/common";
-import { storageLocal } from "@pureadmin/utils";
-import { type DataInfo, userKey } from "@/utils/auth";
-import { configContentMap } from "@/views/common";
+import { getSignboardList, deleteDevice } from "@/api/common";
 import { message } from "@/utils/message";
 import { ElMessageBox } from "element-plus";
 
@@ -66,7 +56,6 @@ const emit = defineEmits([]);
 const dialogVisible = ref(false);
 const loading = ref(false);
 const show = () => {
-  getShowFields();
   getListData();
   dialogVisible.value = true;
 };
@@ -82,30 +71,7 @@ defineExpose({
 const searchValue = ref("");
 const handleSearch = () => {};
 
-/** 标识牌展示信息字段 */
-const showFileds = ref([]);
-const getShowFields = async () => {
-  showFileds.value = [];
-  const res: any = await getInfoFieldList({
-    userId: userId.value
-  });
-  if (res.code == 1) {
-    const shows = res.data.find(item => item.tagType == "3");
-    Object.keys(shows).map(item => {
-      if (shows[item] && configContentMap.has(item)) {
-        showFileds.value.push({
-          label: configContentMap.get(item),
-          value: item
-        });
-      }
-    });
-  }
-};
-
 /** 列表数据 */
-const userId = ref(
-  storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? ""
-);
 const dataList = ref([]);
 const columns = ref([
   {
