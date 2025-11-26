@@ -263,12 +263,30 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button
+            v-if="!generateImgSuccess"
             v-loading="generateLoading"
             type="primary"
             @click="handleGenerateSignboard"
             >生成标识牌</el-button
           >
-          <el-button @click="handleClosedPreview">返回</el-button>
+          <el-button v-if="!generateImgSuccess" @click="handleClosedPreview"
+            >返回</el-button
+          >
+          <el-button
+            v-if="generateImgSuccess"
+            type="primary"
+            @click="handleCopySignboard"
+            >复制标识牌</el-button
+          >
+          <el-button
+            v-if="generateImgSuccess"
+            type="primary"
+            @click="handleCopyQrCode"
+            >复制二维码</el-button
+          >
+          <el-button v-if="generateImgSuccess" @click="handleClosedPreview"
+            >完成</el-button
+          >
         </div>
       </template>
     </el-dialog>
@@ -688,6 +706,9 @@ const dialogPreviewVisible = ref(false);
 const signboardItemRef = ref();
 const signboardItemWrapRef = ref();
 const previewDevice = ref();
+const generateImgSuccess = ref(false); // 生成图片成功状态
+const signboardImgUrl = ref(""); // 标识牌图片地址
+const qrCodeImgUrl = ref(""); // 二维码图片地址
 function showPreviewDialog(item) {
   previewDevice.value = item;
   dialogPreviewVisible.value = true;
@@ -730,7 +751,10 @@ async function handleGenerateSignboard() {
       generateLoading.value = false;
       if (res.code == 1) {
         message("生成图片成功", { type: "success" });
-        toSignboardList();
+        generateImgSuccess.value = true;
+        signboardImgUrl.value = res.data?.imageUrlAddress;
+        qrCodeImgUrl.value = res.data?.qrCodeUrlAddress;
+        // toSignboardList();
       } else {
         message(res.message, { type: "error" });
       }
@@ -740,8 +764,45 @@ async function handleGenerateSignboard() {
       message("生成图片失败", { type: "error" });
     });
 }
+// 复制标识牌
+async function handleCopySignboard() {
+  try {
+    // 1. 下载图片为 Blob
+    const res = await fetch(signboardImgUrl.value);
+    const blob = await res.blob();
+    // 2. 封装成 ClipboardItem
+    const data = [new ClipboardItem({ [blob.type]: blob })];
+    // 3. 写入剪贴板
+    await navigator.clipboard.write(data);
+
+    message("复制图片成功", { type: "success" });
+  } catch (err) {
+    console.error("复制失败：", err);
+    message("复制图片失败", { type: "error" });
+  }
+}
+// 复制二维码
+async function handleCopyQrCode() {
+  try {
+    // 1. 下载图片为 Blob
+    const res = await fetch(qrCodeImgUrl.value);
+    const blob = await res.blob();
+    // 2. 封装成 ClipboardItem
+    const data = [new ClipboardItem({ [blob.type]: blob })];
+    // 3. 写入剪贴板
+    await navigator.clipboard.write(data);
+
+    message("复制图片成功", { type: "success" });
+  } catch (err) {
+    console.error("复制失败：", err);
+    message("复制图片失败", { type: "error" });
+  }
+}
 function handleClosedPreview() {
   dialogPreviewVisible.value = false;
+  generateImgSuccess.value = false; // 清除生成图片状态
+  signboardImgUrl.value = "";
+  qrCodeImgUrl.value = "";
 }
 function toSignboardList() {
   handleClosedPreview();
