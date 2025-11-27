@@ -170,7 +170,7 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogFormVisible = false">取消</el-button>
+          <el-button @click="handleClosed">取消</el-button>
           <el-button
             type="primary"
             :disabled="isShow"
@@ -284,7 +284,7 @@
             @click="handleCopyQrCode"
             >复制二维码</el-button
           >
-          <el-button v-if="generateImgSuccess" @click="handleClosedPreview"
+          <el-button v-if="generateImgSuccess" @click="toSignboardList"
             >完成</el-button
           >
         </div>
@@ -373,9 +373,7 @@ const form = reactive({
 });
 const uploadRef = ref();
 function handleCreate() {
-  // getCreateFiles();
   getTypeFilesList();
-  ruleFormRef.value?.resetFields();
   dialogClass.value = "add";
   dialogFormVisible.value = true;
   isShow.value = false;
@@ -438,8 +436,6 @@ function handleDelete(item) {
       if (res.code == 1) {
         message(`删除成功`, { type: "success" });
         getListData();
-      } else {
-        message(res.message, { type: "error" });
       }
     })
     .catch(() => {});
@@ -482,8 +478,6 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
           } else {
             getListData();
           }
-        } else {
-          message(res.message, { type: "error" });
         }
       } else if (dialogClass.value == "edit") {
         const res: any = await updateFile({
@@ -507,8 +501,6 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
           } else {
             getListData();
           }
-        } else {
-          message(res.message, { type: "error" });
         }
       }
     }
@@ -517,12 +509,32 @@ async function handleConfirm(formEl: FormInstance | undefined, isPreview) {
 function handleClosed() {
   dialogFormVisible.value = false;
   uploadRef.value!.clearFiles();
-  ruleFormRef.value?.resetFields(); // 动画结束后再清空数据
+  clearFormFields(); // 清除表单内容
   form.infoFileList = [];
   uploadDatumList.value = [];
   importDatumList.value = [];
   typeFiles.value = [];
 }
+const clearFormFields = () => {
+  // 1. 清除验证状态
+  ruleFormRef.value?.resetFields();
+  // 2. 遍历 form 对象的键
+  for (const key in form) {
+    // 使用类型断言来处理 TypeScript 报错（如果需要）
+    const k = key as keyof typeof form;
+    // 根据字段类型判断清空方式
+    if (Array.isArray(form[k])) {
+      form[k] = [] as any; // 清空数组
+    } else if (typeof form[k] === "string") {
+      console.log("streing", form[k]);
+      form[k] = "" as any; // 清空字符串
+    } else if (typeof form[k] === "number") {
+      form[k] = 0 as any; // 或 null
+    } else {
+      form[k] = null as any; // 其他类型设为 null
+    }
+  }
+};
 
 /** 上传图片 */
 const imgFileList = ref([]);
@@ -614,8 +626,6 @@ async function getTypeFilesList() {
   });
   if (res.code == 1) {
     typeFilesList.value = res.data || [];
-  } else {
-    message(res.message, { type: "error" });
   }
 }
 function handleChangeTypeTem(list) {
@@ -755,8 +765,6 @@ async function handleGenerateSignboard() {
         signboardImgUrl.value = res.data?.imageUrlAddress;
         qrCodeImgUrl.value = res.data?.qrCodeUrlAddress;
         // toSignboardList();
-      } else {
-        message(res.message, { type: "error" });
       }
     })
     .catch(error => {
