@@ -85,6 +85,7 @@ const getListData = async () => {
 
 const handleCreate = () => {
   form.name = "";
+  form.id = "";
   dialogClass.value = "add";
   dialogFormVisible.value = true;
 };

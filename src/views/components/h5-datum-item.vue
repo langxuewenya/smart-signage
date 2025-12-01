@@ -71,9 +71,17 @@ function handleDownload() {
   }
 
   .name {
-    display: inline-block;
+    display: -webkit-box;
+    max-width: 100%;
+    // display: inline-block;
     margin-top: 5px;
     margin-left: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 2;
+    text-align: center;
+    word-wrap: break-word;
+    -webkit-box-orient: vertical;
   }
 }
 </style>

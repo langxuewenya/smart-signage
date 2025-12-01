@@ -2,7 +2,7 @@ export const configContentMap = new Map([
   ["tagNum", "设备标签号"],
   ["serialNo", "Tag No."],
   ["deviceName", "设备名称"],
-  ["Name", "设备责任单位"],
+  ["Name", "Name"],
   ["specsModel", "规格型号"],
   ["drawingNo", "图纸号/物料号"],
   ["deviceBelongUnit", "Mat.Cd."],
