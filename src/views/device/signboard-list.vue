@@ -49,6 +49,8 @@ import { Search } from "@element-plus/icons-vue";
 import { getSignboardList, deleteDevice } from "@/api/common";
 import { message } from "@/utils/message";
 import { ElMessageBox } from "element-plus";
+import { storageLocal } from "@pureadmin/utils";
+import { type DataInfo, userKey } from "@/utils/auth";
 
 const emit = defineEmits([]);
 
@@ -70,6 +72,10 @@ defineExpose({
 /** 搜索栏 */
 const searchValue = ref("");
 const handleSearch = () => {};
+// 登录人userId
+const userId = ref(
+  storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? ""
+);
 
 /** 列表数据 */
 const dataList = ref([]);
@@ -92,7 +98,8 @@ const columns = ref([
 const getListData = async () => {
   loading.value = true;
   const res: any = await getSignboardList({
-    param: searchValue.value
+    param: searchValue.value,
+    userId: userId.value
   });
   loading.value = false;
   console.log(res);
