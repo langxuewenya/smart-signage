@@ -28,7 +28,13 @@
       style="height: 85vh"
     >
       <template #signboard="{ row }">
-        <img :src="row.imageUrl" />
+        <img :src="row.imageUrl" width="575" height="345" />
+      </template>
+      <template #type="{ row }">
+        <el-tag v-if="row.codeType == '1'" type="warning" size="large"
+          >金风专用</el-tag
+        >
+        <el-tag v-else type="primary" size="large">普通</el-tag>
       </template>
       <template #option="{ row }">
         <el-button type="success" @click="handleCopySignboard(row)"
@@ -86,6 +92,13 @@ const columns = ref([
     align: "center",
     width: 600,
     slot: "signboard"
+  },
+  {
+    prop: "",
+    label: "类型",
+    align: "center",
+    minWidth: 100,
+    slot: "type"
   },
   {
     prop: "",

@@ -764,7 +764,6 @@ async function handleGenerateSignboard() {
         generateImgSuccess.value = true;
         signboardImgUrl.value = res.data?.imageUrlAddress;
         qrCodeImgUrl.value = res.data?.qrCodeUrlAddress;
-        // toSignboardList();
       }
     })
     .catch(error => {
