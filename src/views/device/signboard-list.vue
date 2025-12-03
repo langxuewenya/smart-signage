@@ -34,7 +34,7 @@
         <el-tag v-if="row.codeType == '1'" type="warning" size="large"
           >金风专用</el-tag
         >
-        <el-tag v-else type="primary" size="large">普通</el-tag>
+        <el-tag v-else type="primary" size="large">通用</el-tag>
       </template>
       <template #option="{ row }">
         <el-button type="success" @click="handleCopySignboard(row)"
