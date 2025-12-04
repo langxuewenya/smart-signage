@@ -7,7 +7,7 @@ export const configContentMap = new Map([
   ["drawingNo", "图纸号/物料号"],
   ["deviceBelongUnit", "Mat.Cd."],
   ["factoryNo", "出厂编码"],
-  ["device_category", "Fact.Cd."],
+  ["deviceCategory", "Fact.Cd."],
   ["shapeSize", "外形尺寸"],
   ["deviceWeight", "设备自重"],
   ["produceFactory", "生产厂家"],
